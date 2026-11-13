@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin:0">
+<title>servohub 项目地图</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap">
+<style>
+/* A building guide drawn on drafting paper. The plan is one building with ink walls: wings carry a signage band,
+   rooms carry a pictogram. Picking a room opens its sheet below: a signage header and a flow diagram.
+   Left aligned throughout. Colour belongs to the wings; ink is for walls and words. */
+:root{
+  --paper:#f3f5f9; --dot:#cdd4e0; --sheet:#ffffff; --ink:#14213a; --muted:#57627a; --hair:#d3d9e4; --track:#dfe4ec;
+  --warn:#c9470f; --on:#ffffff;
+  --z0:#1e5bd8; --z0s:#e4edfd;
+  --z1:#0a8765; --z1s:#dcf2ea;
+  --z2:#d2501a; --z2s:#fce8dc;
+  --z3:#7046cc; --z3s:#ebe5fa;
+  --z4:#0d7887; --z4s:#dbf1f4;
+  --z5:#b02a60; --z5s:#fae4ec;
+  --f-text:"Barlow","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --f-num:"Barlow Condensed","Barlow","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  --f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0d1422; --dot:#1f2b43; --sheet:#141d30; --ink:#e7ecf6; --muted:#97a3ba; --hair:#2a3651; --track:#27324b;
+    --warn:#ff9a5c; --on:#0d1422;
+    --z0:#78a2ff; --z0s:#172544; --z1:#55cba7; --z1s:#112e28; --z2:#ff9258; --z2s:#38210f;
+    --z3:#b299ff; --z3s:#241d44; --z4:#62c9d6; --z4s:#102c31; --z5:#f28db2; --z5s:#351926; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0d1422; --dot:#1f2b43; --sheet:#141d30; --ink:#e7ecf6; --muted:#97a3ba; --hair:#2a3651; --track:#27324b;
+  --warn:#ff9a5c; --on:#0d1422;
+  --z0:#78a2ff; --z0s:#172544; --z1:#55cba7; --z1s:#112e28; --z2:#ff9258; --z2s:#38210f;
+  --z3:#b299ff; --z3s:#241d44; --z4:#62c9d6; --z4s:#102c31; --z5:#f28db2; --z5s:#351926; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background-color:var(--paper);background-image:radial-gradient(var(--dot) 1px,transparent 1.3px);background-size:22px 22px;
+  color:var(--ink);font-family:var(--f-text);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:30px 60px}
+.wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+svg.ic{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+code{font-family:var(--f-mono);font-size:.82em;background:var(--paper);border:1px solid var(--hair);padding:.05em .36em;border-radius:5px;overflow-wrap:anywhere}
+p{margin:0}
+.z0{--z:var(--z0);--zs:var(--z0s)} .z1{--z:var(--z1);--zs:var(--z1s)} .z2{--z:var(--z2);--zs:var(--z2s)}
+.z3{--z:var(--z3);--zs:var(--z3s)} .z4{--z:var(--z4);--zs:var(--z4s)} .z5{--z:var(--z5);--zs:var(--z5s)}
+.zx{--z:var(--muted);--zs:var(--track)} /* changed files that no part owns: they sit in no wing, so they take no wing's colour */
+.pic{display:flex;align-items:center;justify-content:center;background:var(--z);color:var(--on);border-radius:8px;flex:none}
+
+/* heading */
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 28px;align-items:end}
+.title{font-size:clamp(32px,5.2vw,56px);font-weight:900;line-height:1.04;letter-spacing:-.015em;margin:0;overflow-wrap:anywhere}
+.stamp{font-size:13px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.sum{font-size:17px;font-weight:500;max-width:38em}
+.key{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);align-items:center;justify-content:flex-end}
+.key span{display:inline-flex;align-items:center;gap:7px}
+.kroom{width:24px;height:16px;border-radius:3px;background:var(--z0)}
+.kcare{width:24px;height:16px;border-radius:3px;border:1.5px solid var(--z2);
+  background:repeating-linear-gradient(135deg,transparent 0 4px,var(--z2) 4px 5.5px)}
+.dots{display:inline-flex;gap:3px}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--track)}
+.dots i.f{background:currentColor}
+
+/* the building */
+.plan{display:grid;gap:3px;background:var(--ink);border:3px solid var(--ink);border-radius:12px;overflow:hidden}
+.wing{display:flex;flex-direction:column;gap:2px;background:var(--ink);min-width:0}
+.wing h2{margin:0;padding:8px 13px;background:var(--z);color:var(--on);font-size:14.5px;font-weight:700;line-height:1.35}
+.rooms{flex:1;display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));grid-auto-rows:1fr;gap:2px}
+.room{position:relative;border:0;border-radius:0;background-color:var(--zs);padding:12px 12px 11px;min-height:104px;text-align:left;cursor:pointer;
+  display:flex;flex-direction:column;gap:8px;min-width:0}
+.room.care{background-image:repeating-linear-gradient(135deg,transparent 0 10px,color-mix(in srgb,var(--z) 20%,transparent) 10px 11.5px)}
+.room .pic{width:34px;height:34px;font-size:20px}
+.room .nm{font-weight:700;font-size:14.5px;line-height:1.3;overflow-wrap:anywhere}
+.room .dots{margin-top:auto;color:var(--z)}
+.room .lock{position:absolute;right:11px;bottom:10px;font-size:16px;color:var(--z)}
+.room .tr{position:absolute;top:11px;right:11px;display:flex;gap:5px;align-items:center}
+.room .who{display:none;gap:3px}
+.room.lit .who{display:inline-flex}
+.room .cnt{height:24px;min-width:28px;padding:0 9px;border-radius:12px;background:var(--on);color:var(--z);
+  font-family:var(--f-num);font-size:17px;font-weight:700;line-height:24px;text-align:center;display:none;font-variant-numeric:tabular-nums}
+.room:hover{background-color:var(--sheet)}
+.room.lit,.room.lit:hover,.room.sel,.room.sel:hover{background-color:var(--z);background-image:none;color:var(--on)}
+.room.lit .pic,.room.sel .pic{background:var(--on);color:var(--z)}
+.room.lit .dots,.room.lit .lock,.room.sel .dots,.room.sel .lock{color:var(--on)}
+.room.lit .dots i:not(.f),.room.sel .dots i:not(.f){background:var(--on);opacity:.32}
+.room.lit .cnt{display:block}
+.room.mate .cnt{display:block;background:var(--z);color:var(--on)}
+.room.dim>*{opacity:.5}
+.room.outside{background-color:var(--sheet);box-shadow:inset 0 0 0 2px var(--sheet),inset 0 0 0 3.5px var(--z)}
+.mini{display:flex;flex-wrap:wrap;gap:2px;max-width:92px}
+.mini i{width:7px;height:7px;border-radius:1.5px;background:var(--z);opacity:.6}
+.mini i.x{background:transparent;box-shadow:inset 0 0 0 1px var(--z)}
+.room.lit .mini i,.room.sel .mini i{background:var(--on)}
+.room.lit .mini i.x,.room.sel .mini i.x{background:transparent;box-shadow:inset 0 0 0 1px var(--on)}
+/* three ways to look at the same building */
+.viewbar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.vcap{font-size:13.5px;color:var(--muted);flex:1 1 280px}
+.alt{--z:var(--ink);--zs:var(--paper);border:3px solid var(--ink);border-radius:12px;padding:16px 12px;overflow-x:auto;
+  background-color:var(--sheet);background-image:radial-gradient(var(--dot) 1px,transparent 1.3px);background-size:22px 22px}
+.alt[hidden],.plan[hidden],.viewbar[hidden]{display:none}
+svg.rel{display:block;margin:0 auto}
+.rn{cursor:pointer}
+.rn rect.rb{fill:var(--zs);stroke:var(--z);stroke-width:1.6}
+.rn rect.rp{fill:var(--z)}
+.rn .ri{fill:none;stroke:var(--on);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.rn text{font-family:var(--f-text);font-size:13px;font-weight:700;fill:var(--ink)}
+.rn.sel rect.rb{fill:var(--z)} .rn.sel rect.rp{fill:var(--on)} .rn.sel .ri{stroke:var(--z)} .rn.sel text{fill:var(--on)}
+.rn.ext rect.rb{fill:var(--sheet);stroke-dasharray:5 4}
+.rn.dim{opacity:.3}
+.rn:focus-visible rect.rb{stroke:var(--ink);stroke-width:3}
+.re{fill:none;stroke:var(--ink);opacity:.34}
+.re.on{opacity:.9}
+.re.up{stroke:var(--warn);stroke-dasharray:6 4;opacity:.95}
+.rah{fill:var(--ink)} .rahu{fill:var(--warn)}
+.rlone{font-family:var(--f-text);font-size:12px;fill:var(--muted)}
+.rsep{stroke:var(--hair);stroke-dasharray:4 5}
+.fn.link{cursor:pointer}
+.fn.plain rect.fb{stroke:var(--ink)} .fn.plain rect.fp{fill:var(--ink)}
+.fe.loose{stroke-dasharray:6 5}
+.rchips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.rchips button{border:1.5px solid var(--ink);background:var(--sheet);border-radius:999px;padding:3px 14px;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+.rchips button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.undernote{font-size:12.5px;color:var(--muted);margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.undernote b{font-weight:600;color:var(--ink)}
+/* the rooms inside a room */
+.blkhead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.inplan{display:flex;flex-wrap:wrap;gap:2px;background:var(--ink);border:2px solid var(--ink);border-radius:10px;overflow:hidden}
+.sroom{flex:1 1 168px;min-width:0;border:0;background:var(--zs);padding:10px 11px;text-align:left;cursor:pointer;display:grid;
+  grid-template-columns:26px minmax(0,1fr);gap:4px 9px;align-items:center}
+.sroom .pic{width:26px;height:26px;font-size:16px;border-radius:6px}
+.sroom .nm{font-weight:700;font-size:13.5px;line-height:1.3;overflow-wrap:anywhere}
+.sroom .sm{grid-column:2;display:flex;gap:8px;align-items:center;font-family:var(--f-num);font-size:14px;font-weight:600;color:var(--z);font-variant-numeric:tabular-nums}
+.sroom:hover{background:var(--sheet)}
+.sroom.ext{background:var(--sheet);box-shadow:inset 0 0 0 2px var(--sheet),inset 0 0 0 3.5px var(--z)}
+.sroom.lit,.sroom.lit:hover{background:var(--z);color:var(--on)}
+.sroom.lit .pic{background:var(--on);color:var(--z)} .sroom.lit .sm{color:var(--on)}
+.sroom.lit .dots i:not(.f){background:var(--on);opacity:.32}
+.tagx{font-family:var(--f-text);font-size:11.5px;font-weight:700;border:1.5px solid currentColor;border-radius:5px;padding:0 6px;line-height:17px;white-space:nowrap}
+.crumb{background:none;border:0;padding:0;font-size:14px;font-weight:600;color:inherit;opacity:.85;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.out-line{display:flex;gap:9px;align-items:center;font-weight:600;font-size:14.5px}
+.out-line .ic{font-size:18px}
+/* a window: one Claude Code or Codex session, marked like a line on a transit map */
+.wb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;flex:none;
+  background:var(--ink);color:var(--paper);font-family:var(--f-num);font-size:14.5px;font-weight:700;line-height:1}
+.wb.q{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1.5px var(--muted)}
+.room .wb{box-shadow:0 0 0 1.5px var(--on)}
+.room .wb.q{color:var(--on);box-shadow:inset 0 0 0 1.5px var(--on)}
+.room .more{font-family:var(--f-num);font-size:14px;font-weight:700}
+
+/* what is being worked on: tasks from the journal the agent keeps, shown in the lines it wrote there for people */
+.tasks{display:flex;flex-direction:column;gap:10px}
+.tasks[hidden]{display:none}
+.thd{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
+.thd h2{font-size:21px;font-weight:900;margin:0}
+.tcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:10px}
+.tcard{display:flex;flex-direction:column;gap:8px;min-width:0;text-align:left;cursor:pointer;background:var(--sheet);
+  border:1.5px solid var(--hair);border-radius:12px;padding:13px 14px 12px}
+.tcard:hover{border-color:var(--ink)}
+.tcard[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 5px 0 0 var(--ink)}
+.tt{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.tn{font-weight:700;font-size:17px;line-height:1.3;overflow-wrap:anywhere}
+.tnow{font-size:14px;line-height:1.5;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.tnow.none{color:var(--muted)}
+.tf{display:flex;flex-wrap:wrap;gap:6px 9px;align-items:center;margin-top:auto;font-size:12.5px;color:var(--muted)}
+.tpics{display:inline-flex;gap:3px}
+.tpics .pic{width:22px;height:22px;font-size:14px;border-radius:6px}
+.flag.me{background:var(--warn);color:var(--on)}
+.tline{font-size:17px;font-weight:500;line-height:1.55;max-width:44em}
+
+/* the sheet for what is picked */
+.stage{border:3px solid var(--ink);border-radius:12px;background:var(--sheet);overflow:hidden;scroll-margin-top:14px}
+.band{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:14px 18px;background:var(--ink);color:var(--paper)}
+.band.wingc{background:var(--z);color:var(--on)}
+.band .pic{width:46px;height:46px;font-size:27px;border-radius:10px;background:var(--on);color:var(--z)}
+.band h2{margin:0;font-size:23px;font-weight:900;line-height:1.2}
+.band .meta{font-family:var(--f-num);font-size:16px;font-weight:600;opacity:.9;font-variant-numeric:tabular-nums}
+.band .what{flex:1 1 280px;font-size:15.5px;font-weight:500;max-width:40em}
+
+.band code{background:transparent;border-color:currentColor;color:inherit}
+.band .back{margin-left:auto;background:none;border:1.5px solid currentColor;border-radius:999px;padding:3px 14px;font-size:13px;font-weight:600;cursor:pointer;color:inherit}
+.body{padding:18px;display:flex;flex-direction:column;gap:18px}
+h3{font-size:13.5px;font-weight:700;margin:0;color:var(--muted)}
+.blk{display:flex;flex-direction:column;gap:8px;min-width:0}
+.care-line{display:flex;gap:9px;align-items:center;font-weight:600;font-size:14.5px;color:var(--warn)}
+.care-line .ic{font-size:18px}
+.canvas{border:1.5px solid var(--hair);border-radius:10px;padding:16px 12px;overflow-x:auto;
+  background-color:var(--paper);background-image:radial-gradient(var(--dot) 1px,transparent 1.3px);background-size:22px 22px}
+svg.flow{display:block;margin:0 auto}
+.fn rect.fb{fill:var(--sheet);stroke:var(--z);stroke-width:2}
+.fn.ext rect.fb{stroke:var(--ink);stroke-dasharray:6 4}
+.fn rect.fp{fill:var(--z)}
+.fn.ext rect.fp{fill:var(--ink)}
+.fn .fi{fill:none;stroke:var(--on);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.fn .fl{font-family:var(--f-text);font-size:14px;font-weight:700;fill:var(--ink)}
+.fn .fnote{font-family:var(--f-text);font-size:11.5px;fill:var(--muted)}
+.fe{fill:none;stroke:var(--ink);stroke-width:1.8;opacity:.72}
+.fah{fill:var(--ink)}
+.felbg{fill:var(--sheet);stroke:var(--hair);stroke-width:1}
+.fel{font-family:var(--f-text);font-size:12px;font-weight:600;fill:var(--ink)}
+.fdot{fill:var(--z)}
+.fkey{font-size:12.5px;color:var(--muted)}
+.aged{font-size:12.5px;color:var(--muted);display:flex;gap:7px;align-items:center}
+.aged.much{color:var(--warn);font-weight:600}
+.aged .ic{font-size:15px}
+.ask{font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+.say{font-family:var(--f-text);font-weight:600;color:var(--ink);background:var(--paper);border:1.5px solid var(--hair);border-radius:8px;padding:2px 10px;user-select:all;-webkit-user-select:all;cursor:text}
+.fkey i{display:inline-block;width:24px;height:14px;border-radius:4px;border:1.5px dashed var(--ink);vertical-align:-2px;margin-right:7px}
+.empty{border:1.5px dashed var(--hair);border-radius:10px;padding:22px;color:var(--muted);font-size:14.5px}
+.cols3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px 30px;align-items:start}
+.signs{display:flex;flex-direction:column;gap:9px}
+.sign{display:grid;grid-template-columns:22px minmax(0,1fr);gap:9px;align-items:start;font-size:14.5px;line-height:1.5}
+.sign .ic{font-size:19px;margin-top:1px;color:var(--warn)}
+.sign .src{display:block;font-size:12px;color:var(--muted)}
+.pals{display:flex;flex-wrap:wrap;gap:7px}
+.pal{display:inline-flex;align-items:center;gap:8px;border:0;background:var(--zs);border-radius:8px;padding:4px 11px 4px 4px;font-size:14px;font-weight:600;cursor:pointer}
+.pal .pic{width:24px;height:24px;font-size:15px;border-radius:6px}
+.pal .pct{font-family:var(--f-num);font-size:15px;color:var(--z);font-variant-numeric:tabular-nums}
+.sub{font-size:13.5px;color:var(--muted)}
+details summary{cursor:pointer;font-size:13.5px;font-weight:700;color:var(--muted)}
+details .in{padding-top:8px;display:flex;flex-direction:column;gap:5px;font-size:13px}
+details .tags{flex-direction:row;flex-wrap:wrap}
+.stack{display:flex;height:22px;border-radius:6px;overflow:hidden;gap:2px;background:var(--sheet)}
+.stack i{display:block;background:var(--z);min-width:6px}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:9px 30px}
+.lrow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:15px}
+.lrow .pic{width:28px;height:28px;font-size:17px;border-radius:7px}
+.lrow b{font-weight:600}
+.lrow .n{font-family:var(--f-num);font-size:18px;font-weight:700;display:inline-flex;gap:8px;align-items:center;font-variant-numeric:tabular-nums}
+.lanes{display:flex;flex-direction:column;border:1.5px solid var(--hair);border-radius:10px;overflow:hidden}
+.lane{display:grid;grid-template-columns:30px minmax(0,1fr) minmax(0,1.5fr);gap:6px 14px;align-items:center;width:100%;
+  padding:10px 14px;border:0;border-top:1px solid var(--hair);background:none;text-align:left;cursor:pointer}
+.lane:first-child{border-top:0}
+.lane:hover{background:var(--paper)}
+.lane[aria-pressed="true"]{background:var(--paper);box-shadow:inset 4px 0 0 var(--ink)}
+.lane .wb{width:28px;height:28px;font-size:18px}
+.lane .lt{font-weight:700;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+.lane .ls{display:block;font-size:12.5px;font-weight:400;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--zs);border-radius:8px;padding:3px 10px 3px 3px;font-size:13.5px;font-weight:600}
+.chip .pic{width:22px;height:22px;font-size:14px;border-radius:6px}
+.chip .n{font-family:var(--f-num);font-size:15.5px;color:var(--z);font-variant-numeric:tabular-nums}
+.both{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:13.5px}
+.both .wbs{display:inline-flex;gap:3px}
+.nowby{display:flex;flex-wrap:wrap;gap:6px 9px;align-items:center;font-size:14.5px;font-weight:600}
+.nowby .sub{font-weight:400}
+.kwb{width:18px;height:18px;font-size:12px}
+.band .wb{background:var(--paper);color:var(--ink);width:30px;height:30px;font-size:19px;vertical-align:-5px;margin-right:6px}
+.band .wb.q{background:transparent;color:var(--paper);box-shadow:inset 0 0 0 1.5px var(--paper)}
+.flag{font-family:var(--f-text);font-size:11.5px;font-weight:700;color:var(--warn);border:1.5px solid var(--warn);border-radius:5px;padding:0 6px;line-height:17px;white-space:nowrap}
+
+/* footprints */
+.work{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.whead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.whead h2{font-size:21px;font-weight:900;margin:0}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:999px;background:var(--sheet);padding:2px}
+.seg button{border:0;background:none;border-radius:999px;padding:3px 14px;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.table{background:var(--sheet);border:1.5px solid var(--hair);border-radius:12px;padding:8px 8px 6px;overflow-x:auto}
+.thead,.trow{display:grid;grid-template-columns:3.2em max-content minmax(140px,1fr);gap:14px;align-items:center;padding:6px 10px}
+.thead{padding-bottom:3px}
+.trow{width:100%;min-width:max-content;text-align:left;background:none;border:0;border-top:1px solid var(--hair);cursor:pointer}
+.trow:hover{background:var(--paper)}
+.trow.sel{background:var(--paper);box-shadow:inset 4px 0 0 var(--ink)}
+.trow .d{font-family:var(--f-num);font-size:16px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.trow .s{font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.foot{display:inline-flex;gap:3px}
+.foot .gap{width:6px}
+.cell{width:17px;height:17px;border-radius:3px;background:var(--track);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--z)}
+.thead .cell{background:none;font-size:15px}
+.cell.t{background:var(--z)} .cell.t.one{opacity:.5}
+.note{font-size:12.5px;color:var(--muted);max-width:64em}
+
+@media (max-width:860px){
+  .top{grid-template-columns:minmax(0,1fr)} .stamp{text-align:left} .key{justify-content:flex-start}
+  .plan{grid-template-columns:minmax(0,1fr) !important}
+  .rooms{--cols:2 !important}
+  .trow .s{display:none}
+  .thead,.trow{grid-template-columns:3.2em max-content}
+  .body{padding:14px}
+  .lane{grid-template-columns:30px minmax(0,1fr)} .lane .chips{grid-column:2}
+}
+@media (prefers-reduced-motion:reduce){ .fdot{display:none} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1 class="title" id="title"></h1>
+    <div class="stamp" id="stamp"></div>
+    <p class="sum" id="sum"></p>
+    <div class="key" id="key"></div>
+  </header>
+  <div class="viewbar" id="viewbar" hidden><div class="seg" id="views"></div><span class="vcap" id="vcap"></span></div>
+  <div class="plan" id="plan"></div>
+  <div class="alt" id="alt" hidden></div>
+  <section class="tasks" id="tasks" hidden>
+    <div class="thd"><h2 id="tasksh"></h2><span class="sub" id="tasksm"></span></div>
+    <div class="tcards" id="tcards"></div>
+    <p class="sub" id="taskso" hidden></p>
+  </section>
+  <section class="stage" id="stage" aria-live="polite"></section>
+  <section class="work">
+    <div class="whead"><h2 id="workh"></h2><div class="seg" id="seg"></div></div>
+    <div class="table" id="table"></div>
+  </section>
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+(function(){
+  var D={"project": "servohub", "lang": "zh", "generated": "2026-11-12", "files": 1029, "history": 1, "recentDays": 30, "list": "docs/parts.md", "parts": [{"drawn": "2026-11-12", "since": 0, "name": "运动模式", "icon": "play", "flow": {"nodes": [{"name": "选模式指令", "note": "来自对外通信", "icon": "mail", "ext": false}, {"name": "调度器", "note": "同类模式一次只跑一个", "icon": "", "ext": false}, {"name": "准备", "note": "初始化并等待启动", "icon": "", "ext": false}, {"name": "运行", "note": "硬件就绪才每拍执行", "icon": "", "ext": false}, {"name": "收尾", "note": "成功或出错都停下", "icon": "", "ext": false}, {"name": "控制核心", "note": "", "icon": "", "ext": false}], "edges": [{"a": "选模式指令", "b": "调度器", "label": "换模式", "both": false}, {"a": "调度器", "b": "准备", "label": "先停旧的", "both": false}, {"a": "准备", "b": "运行", "label": "启动成功", "both": false}, {"a": "运行", "b": "控制核心", "label": "目标值", "both": false}, {"a": "运行", "b": "收尾", "label": "完成或出错", "both": false}]}, "what": "驱动器能做的每一种动作各是一个\"模式\"：走到某位置、保持某速度、出某力矩、回零等，一次只运行一个。", "sensitive": "", "rules": [], "paths": ["app/"], "external": "", "files": 21, "outside": 0, "group": "驱动器里的程序", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "", "since": 0, "name": "电机辨识", "icon": "search", "flow": null, "what": "自动测出一台陌生电机的特性：转向、极对数、电角度零点、电气和机械参数、摩擦与力矩波动。", "sensitive": "", "rules": [], "paths": ["app/Identify/"], "external": "", "files": 12, "outside": 0, "group": "驱动器里的程序", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "", "since": 0, "name": "安全监测", "icon": "lock", "flow": null, "what": "不停检查电压、电流、温度、编码器等是否正常，管抱闸，判断现在允不允许运动。", "sensitive": "这里决定什么时候报错停机、什么时候松开抱闸，改错了电机可能在不该动的时候动。", "rules": [], "paths": ["app/app_status_check.*", "app/app_brake_control.*", "app/app_motion_precondition.*"], "external": "", "files": 6, "outside": 0, "group": "驱动器里的程序", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "2026-11-12", "since": 0, "name": "参数保存", "icon": "database", "flow": {"nodes": [{"name": "保存指令", "note": "写入或擦除", "icon": "mail", "ext": false}, {"name": "保存任务", "note": "每毫秒看一次", "icon": "", "ext": false}, {"name": "写入保护", "note": "写得太勤就上锁", "icon": "", "ext": false}, {"name": "FlashDB 库", "note": "", "icon": "", "ext": false}, {"name": "板上闪存", "note": "断电不丢", "icon": "database", "ext": false}], "edges": [{"a": "保存指令", "b": "保存任务", "label": "请求", "both": false}, {"a": "保存任务", "b": "写入保护", "label": "先检查", "both": false}, {"a": "写入保护", "b": "FlashDB 库", "label": "允许才写", "both": false}, {"a": "FlashDB 库", "b": "板上闪存", "label": "落盘", "both": false}]}, "what": "把参数、故障记录和摩擦补偿表存进闪存，断电不丢。", "sensitive": "闪存擦写次数有限；程序里有\"短时间写太多就上锁、重启才解锁\"的保护。", "rules": [], "paths": ["app/app_store_param.*", "board_public/flash_db/"], "external": "", "files": 2, "outside": 29, "group": "驱动器里的程序", "subs": [{"drawn": "", "since": 0, "name": "FlashDB 库", "icon": "box", "flow": null, "what": "别人写的小型闪存数据库，负责把一条条数据可靠地写进闪存。", "sensitive": "", "rules": [], "paths": ["board_public/flash_db/"], "external": "开源库 FlashDB 及其 FAL 闪存抽象层（作者 armink），整份拷进仓库。", "files": 29, "outside": 0, "recent": 0, "pending": 0}], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "2026-11-12", "since": 0, "name": "控制核心", "icon": "spark", "flow": {"nodes": [{"name": "测量值", "note": "电流、位置、母线电压", "icon": "plug", "ext": false}, {"name": "位置速度环", "note": "较慢的一拍", "icon": "", "ext": false}, {"name": "运动模式", "note": "", "icon": "", "ext": false}, {"name": "模式状态机", "note": "按模式算目标电流", "icon": "", "ext": false}, {"name": "电流环", "note": "最快的一拍，默认每秒两万次", "icon": "", "ext": false}, {"name": "控制算法", "note": "", "icon": "", "ext": false}, {"name": "三相电压", "note": "交给硬件输出", "icon": "spark", "ext": false}], "edges": [{"a": "测量值", "b": "位置速度环", "label": "位置", "both": false}, {"a": "位置速度环", "b": "运动模式", "label": "先跑模式", "both": false}, {"a": "位置速度环", "b": "模式状态机", "label": "目标", "both": false}, {"a": "模式状态机", "b": "电流环", "label": "目标电流", "both": false}, {"a": "电流环", "b": "控制算法", "label": "调用", "both": false}, {"a": "电流环", "b": "三相电压", "label": "电压", "both": false}]}, "what": "固定节拍反复执行的主循环：读测量值，按当前模式算出该给电机多大电压，再交给硬件输出。", "sensitive": "这是直接决定电机电压的地方，节拍和顺序都不能乱。", "rules": [], "paths": ["motor_control/"], "external": "", "files": 4, "outside": 0, "group": "驱动器里的程序", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "", "since": 0, "name": "控制算法", "icon": "grid", "flow": null, "what": "真正的数学部分：电流环、位置速度环、轨迹规划、陷波滤波、输入整形、各种辨识，还有一个虚拟电机。全部由 Simulink 模型自动生成，不手改。", "sensitive": "", "rules": [], "paths": ["simulink_code_gen/"], "external": "", "files": 56, "outside": 0, "group": "驱动器里的程序", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "", "since": 0, "name": "参数总表", "icon": "database", "flow": null, "what": "驱动器所有参数和状态量的集中存放处，通信、模式、算法都从这里读写。", "sensitive": "", "rules": [], "paths": ["database/"], "external": "", "files": 3, "outside": 0, "group": "驱动器里的程序", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "", "since": 0, "name": "软件示波器", "icon": "layout", "flow": null, "what": "在驱动器内部录下任意变量的波形，再传给电脑看。", "sensitive": "", "rules": [], "paths": ["common/software_scope/"], "external": "", "files": 6, "outside": 0, "group": "驱动器里的程序", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "", "since": 0, "name": "通用工具", "icon": "box", "flow": null, "what": "到处都用得上的小零件：数学函数、环形缓冲区、单位与坐标换算。", "sensitive": "", "rules": [], "paths": ["common/"], "external": "", "files": 8, "outside": 0, "group": "驱动器里的程序", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "2026-11-12", "since": 0, "name": "对外通信", "icon": "plug", "flow": {"nodes": [{"name": "上位机", "note": "电脑或主控制器", "icon": "user", "ext": true}, {"name": "MAVLink 通道", "note": "", "icon": "", "ext": false}, {"name": "CANopen 协议栈", "note": "", "icon": "", "ext": false}, {"name": "EtherCAT 从站", "note": "", "icon": "", "ext": false}, {"name": "CiA402 规范", "note": "", "icon": "", "ext": false}, {"name": "参数总表", "note": "", "icon": "", "ext": false}], "edges": [{"a": "上位机", "b": "MAVLink 通道", "label": "串口或 CAN", "both": false}, {"a": "上位机", "b": "CANopen 协议栈", "label": "CAN 总线", "both": false}, {"a": "上位机", "b": "EtherCAT 从站", "label": "网线", "both": false}, {"a": "CANopen 协议栈", "b": "CiA402 规范", "label": "对象读写", "both": false}, {"a": "EtherCAT 从站", "b": "CiA402 规范", "label": "对象读写", "both": false}, {"a": "MAVLink 通道", "b": "参数总表", "label": "读写参数", "both": false}, {"a": "CiA402 规范", "b": "参数总表", "label": "读写参数", "both": false}]}, "what": "驱动器和外界说话的全部方式：调试用的 MAVLink，工业现场用的 CANopen 和 EtherCAT，以及它们共用的 CiA402 驱动器规范。", "sensitive": "", "rules": [], "paths": ["communication/"], "external": "", "files": 121, "outside": 79, "group": "驱动器里的程序", "subs": [{"drawn": "", "since": 0, "name": "MAVLink 通道", "icon": "mail", "flow": null, "what": "调试和调参用的消息通道，上位机软件靠它看波形、改参数、传文件。消息定义的头文件是生成的。", "sensitive": "", "rules": [], "paths": ["communication/callback/mavlink/", "communication/protocol/MAVLink/"], "external": "", "files": 106, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "CANopen 协议栈", "icon": "plug", "flow": null, "what": "CAN 总线上的标准协议实现，以及描述\"驱动器有哪些可读写项\"的对象字典。", "sensitive": "", "rules": [], "paths": ["communication/protocol/CANopen/", "communication/callback/canopen/"], "external": "开源协议栈 CanFestival；其中 SlaveOD 对象字典是按本项目的 EDS 文件生成的。", "files": 42, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "EtherCAT 从站", "icon": "cloud", "flow": null, "what": "通过网线接入 EtherCAT 主站的从站协议栈（配 LAN925x 芯片）。", "sensitive": "", "rules": [], "paths": ["communication/protocol/EtherCAT_LAN925x/", "communication/callback/ethercat/"], "external": "由 Beckhoff 的 SSC 工具生成的 EtherCAT 从站协议栈；回调文件是本项目写的。", "files": 37, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "CiA402 规范", "icon": "book", "flow": null, "what": "工业伺服驱动器的通用\"行为规范\"：上电、使能、运行、故障这些状态怎么切换，控制字和状态字怎么读写。CANopen 和 EtherCAT 都走这里。", "sensitive": "", "rules": [], "paths": ["communication/protocol/CiA402/", "communication/callback/cia402_od/"], "external": "", "files": 14, "outside": 0, "recent": 0, "pending": 0}], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "2026-11-12", "since": 0, "name": "出厂诊断", "icon": "flask", "flow": {"nodes": [{"name": "电流环采样", "note": "接入点已定，尚未接进正式固件", "icon": "spark", "ext": false}, {"name": "录波器", "note": "存在芯片内存，不占堆", "icon": "", "ext": false}, {"name": "触发", "note": "手动或按信号沿", "icon": "", "ext": false}, {"name": "冻结", "note": "录满就停", "icon": "", "ext": false}, {"name": "整批读取", "note": "录完才传，不实时发", "icon": "mail", "ext": false}], "edges": [{"a": "电流环采样", "b": "录波器", "label": "每拍一组", "both": false}, {"a": "触发", "b": "录波器", "label": "开始", "both": false}, {"a": "录波器", "b": "冻结", "label": "录满", "both": false}, {"a": "冻结", "b": "整批读取", "label": "取走", "both": false}]}, "what": "给工厂和研发用的服务：在芯片内存里高速录下电流环的波形，录完再整批取走。默认不编译进固件。", "sensitive": "", "rules": [], "paths": ["service/", "tools/factory_service_codegen/", "cmake/FactoryServiceCodegen.cmake"], "external": "", "files": 12, "outside": 0, "group": "驱动器里的程序", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "2026-11-12", "since": 0, "name": "硬件接口", "icon": "plug", "flow": {"nodes": [{"name": "上电", "note": "驱动器通电", "icon": "spark", "ext": false}, {"name": "母线电压检查", "note": "稳定半秒才算正常", "icon": "", "ext": false}, {"name": "编码器检查", "note": "两个编码器都要就绪", "icon": "", "ext": false}, {"name": "电流零点校准", "note": "第一次使能时采一千多次取平均", "icon": "", "ext": false}, {"name": "可以运行", "note": "硬件就绪", "icon": "play", "ext": false}], "edges": [{"a": "上电", "b": "母线电压检查", "label": "先看电压", "both": false}, {"a": "母线电压检查", "b": "编码器检查", "label": "正常", "both": false}, {"a": "编码器检查", "b": "电流零点校准", "label": "就绪", "both": false}, {"a": "电流零点校准", "b": "可以运行", "label": "校准成功", "both": false}]}, "what": "程序和电路板之间的一份约定：读电流、读编码器、输出电压等都通过它，换板子时上面的程序不用改。还包含上电自检和各型号电机的参数表。", "sensitive": "", "rules": [], "paths": ["board_public/"], "external": "", "files": 10, "outside": 0, "group": "硬件与运行环境", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "2026-11-12", "since": 0, "name": "Y01 驱动板", "icon": "home", "flow": {"nodes": [{"name": "上电", "note": "板子通电", "icon": "spark", "ext": false}, {"name": "引导程序", "note": "", "icon": "", "ext": false}, {"name": "启动与外设", "note": "", "icon": "", "ext": false}, {"name": "板级驱动", "note": "", "icon": "", "ext": false}, {"name": "控制核心", "note": "", "icon": "", "ext": false}, {"name": "芯片官方库", "note": "", "icon": "", "ext": false}], "edges": [{"a": "上电", "b": "引导程序", "label": "先运行", "both": false}, {"a": "引导程序", "b": "启动与外设", "label": "跳到固件", "both": false}, {"a": "启动与外设", "b": "板级驱动", "label": "初始化", "both": false}, {"a": "板级驱动", "b": "控制核心", "label": "中断里调用", "both": false}, {"a": "板级驱动", "b": "芯片官方库", "label": "操作芯片", "both": false}]}, "what": "把程序装到真实电路板（STM32H743 芯片）上的工程：芯片外设配置、板级驱动、引导程序、固件打包。", "sensitive": "", "rules": [], "paths": ["embedded_project/"], "external": "", "files": 66, "outside": 209, "group": "硬件与运行环境", "subs": [{"drawn": "", "since": 0, "name": "板级驱动", "icon": "plug", "flow": null, "what": "本项目自己写的驱动：CAN、编码器、闪存、固件升级，以及在定时中断里调用控制循环的代码。", "sensitive": "", "rules": [], "paths": ["embedded_project/Y01/Board/"], "external": "", "files": 27, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "启动与外设", "icon": "play", "flow": null, "what": "芯片厂工具生成的启动代码：配时钟、定时器、模数转换、中断入口。", "sensitive": "", "rules": [], "paths": ["embedded_project/Y01/Core/", "embedded_project/Y01/*.ioc"], "external": "", "files": 8, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "引导程序", "icon": "lock", "flow": null, "what": "上电后最先运行的小程序：校验固件，需要时从外部闪存升级或恢复，然后跳进正式固件。", "sensitive": "升级和恢复固件的逻辑在这里，出错可能让驱动器启动不了。", "rules": [], "paths": ["embedded_project/Y01/BootLoader/"], "external": "", "files": 19, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "芯片官方库", "icon": "box", "flow": null, "what": "芯片厂商提供的底层库。", "sensitive": "", "rules": [], "paths": ["embedded_project/Y01/Drivers/", "embedded_project/Y01/BootLoader/Drivers/"], "external": "意法半导体的 STM32H7 HAL 驱动库和 ARM 的 CMSIS，正式固件和引导程序各带一份。", "files": 209, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "工程与打包", "icon": "box", "flow": null, "what": "Keil 工程文件，以及把引导程序和固件合成一个文件、计算校验值的脚本。", "sensitive": "", "rules": [], "paths": ["embedded_project/Y01/MDK-ARM/", "embedded_project/Y01/FwProcess/", "embedded_project/keilkill.bat"], "external": "", "files": 12, "outside": 0, "recent": 0, "pending": 0}], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "2026-11-12", "since": 0, "name": "虚拟驱动器", "icon": "flask", "flow": {"nodes": [{"name": "调试软件", "note": "电脑上的上位机", "icon": "user", "ext": true}, {"name": "ZeroMQ 库", "note": "", "icon": "", "ext": false}, {"name": "对外通信", "note": "", "icon": "", "ext": false}, {"name": "控制核心", "note": "", "icon": "", "ext": false}, {"name": "虚拟硬件", "note": "假的电流、编码器读数", "icon": "plug", "ext": false}, {"name": "虚拟电机", "note": "算法里的电机模型", "icon": "spark", "ext": false}], "edges": [{"a": "调试软件", "b": "ZeroMQ 库", "label": "本机 5555 端口", "both": false}, {"a": "ZeroMQ 库", "b": "对外通信", "label": "MAVLink 消息", "both": false}, {"a": "对外通信", "b": "控制核心", "label": "参数指令", "both": false}, {"a": "控制核心", "b": "虚拟硬件", "label": "读写", "both": true}, {"a": "虚拟硬件", "b": "虚拟电机", "label": "电压与反馈", "both": true}]}, "what": "不接任何硬件，在 Windows 电脑上把整套程序跑起来：用假的硬件接口加虚拟电机，通过本机网络和调试软件通信。", "sensitive": "", "rules": [], "paths": ["SIL_project/", "CMakeLists.txt", "CMakePresets.json", ".vscode/"], "external": "", "files": 10, "outside": 7, "group": "硬件与运行环境", "subs": [{"drawn": "", "since": 0, "name": "ZeroMQ 库", "icon": "box", "flow": null, "what": "别人写的消息通信库，这里用来在本机和调试软件之间传数据。", "sensitive": "", "rules": [], "paths": ["SIL_project/zmq/"], "external": "开源库 ZeroMQ 的 Windows 预编译版本和头文件；收发封装是本项目写的。", "files": 7, "outside": 0, "recent": 0, "pending": 0}], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "2026-11-12", "since": 0, "name": "模型工程", "icon": "layout", "flow": {"nodes": [{"name": "脚本与模块库", "note": "", "icon": "", "ext": false}, {"name": "控制器模型", "note": "", "icon": "", "ext": false}, {"name": "被控对象", "note": "", "icon": "", "ext": false}, {"name": "仿真与测试", "note": "", "icon": "", "ext": false}, {"name": "控制算法", "note": "", "icon": "", "ext": false}], "edges": [{"a": "脚本与模块库", "b": "控制器模型", "label": "提供模块", "both": false}, {"a": "控制器模型", "b": "被控对象", "label": "闭环", "both": true}, {"a": "控制器模型", "b": "仿真与测试", "label": "验证", "both": false}, {"a": "脚本与模块库", "b": "控制算法", "label": "生成 C 代码", "both": false}]}, "what": "控制算法的源头：在 MATLAB Simulink 里画的控制器模型、电机模型、仿真和测试，生成代码的脚本也在这里。", "sensitive": "", "rules": [], "paths": ["simulink_project/"], "external": "", "files": 310, "outside": 0, "group": "设计与生成", "subs": [{"drawn": "", "since": 0, "name": "控制器模型", "icon": "grid", "flow": null, "what": "每个控制功能各一个模型：电流环、位置速度环、轨迹规划、滤波、辨识等。", "sensitive": "", "rules": [], "paths": ["simulink_project/controller/", "simulink_project/architecture/", "simulink_project/module_code_gen/"], "external": "", "files": 28, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "被控对象", "icon": "spark", "flow": null, "what": "电机、编码器、电源等的仿真模型，用来代替真实硬件。", "sensitive": "", "rules": [], "paths": ["simulink_project/plant/"], "external": "", "files": 18, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "仿真与测试", "icon": "flask", "flow": null, "what": "各个环路的仿真模型和测试用例。", "sensitive": "", "rules": [], "paths": ["simulink_project/simulation/", "simulink_project/test_harness/"], "external": "", "files": 12, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "脚本与模块库", "icon": "note", "flow": null, "what": "MATLAB 脚本（生成代码、整定参数、算滤波器）和自定义模块库。", "sensitive": "", "rules": [], "paths": ["simulink_project/utilities/", "simulink_project/lib/"], "external": "", "files": 29, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "工程资源", "icon": "box", "flow": null, "what": "Simulink 工程自己的配置文件和数据字典，基本是软件自动维护的。", "sensitive": "", "rules": [], "paths": ["simulink_project/resources/", "simulink_project/data/", "simulink_project/simulink_project.prj"], "external": "", "files": 223, "outside": 0, "recent": 0, "pending": 0}], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "2026-11-12", "since": 0, "name": "产品契约", "icon": "note", "flow": {"nodes": [{"name": "契约文件", "note": "一份 JSON", "icon": "note", "ext": false}, {"name": "校验工具", "note": "四个 Python 脚本", "icon": "", "ext": false}, {"name": "生成物", "note": "头文件、表格、清单", "icon": "box", "ext": false}, {"name": "参数总表", "note": "", "icon": "", "ext": false}, {"name": "对外通信", "note": "", "icon": "", "ext": false}, {"name": "自动检查", "note": "每次提交都跑", "icon": "lock", "ext": false}], "edges": [{"a": "契约文件", "b": "校验工具", "label": "读入", "both": false}, {"a": "校验工具", "b": "生成物", "label": "生成", "both": false}, {"a": "校验工具", "b": "参数总表", "label": "核对字段", "both": false}, {"a": "校验工具", "b": "对外通信", "label": "核对地址", "both": false}, {"a": "自动检查", "b": "校验工具", "label": "触发", "both": false}]}, "what": "一份\"唯一真相\"文件，规定参数、信号、故障码的编号和含义；工具据此生成给各方用的文件，并自动检查固件有没有和它对不上。", "sensitive": "", "rules": ["改契约覆盖的字段，先改 product_contract.json，再校验、重新生成，不许另存第二份可编辑的副本（contract/README.md）"], "paths": ["contract/", ".github/"], "external": "", "files": 26, "outside": 0, "group": "设计与生成", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "", "since": 0, "name": "代码生成工具", "icon": "box", "flow": null, "what": "把表格和配置变成代码的辅助工具，主要用于生成通信用的对象字典。", "sensitive": "", "rules": [], "paths": ["tools/", "cmake/"], "external": "", "files": 16, "outside": 11, "group": "设计与生成", "subs": [{"drawn": "", "since": 0, "name": "对象字典生成", "icon": "note", "flow": null, "what": "从 EDS 文件和 CiA402 配置生成 CANopen 对象字典的代码和文档。", "sensitive": "", "rules": [], "paths": ["tools/canopen_codegen/", "cmake/CanopenCodegen.cmake"], "external": "", "files": 9, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "数据库生成", "icon": "database", "flow": null, "what": "参数总表和 MAVLink 消息的源表格，以及生成它们的程序（只有可执行文件，没有源码）。", "sensitive": "", "rules": [], "paths": ["tools/database_generate/"], "external": "", "files": 7, "outside": 0, "recent": 0, "pending": 0}, {"drawn": "", "since": 0, "name": "EtherCAT 资料", "icon": "book", "flow": null, "what": "生成 EtherCAT 从站协议栈用的厂商工具包、移植驱动和教程。", "sensitive": "", "rules": [], "paths": ["tools/SSC Generate LAN9252_EtherCAT Protocol Stack/"], "external": "Beckhoff SSC 工具、Microchip LAN9252 SDK 及移植驱动。", "files": 11, "outside": 0, "recent": 0, "pending": 0}], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}, {"drawn": "", "since": 0, "name": "项目说明", "icon": "book", "flow": null, "what": "仓库首页的说明和许可证。说明文件目前还是代码托管平台的默认模板，没有写项目内容。", "sensitive": "", "rules": [], "paths": ["README.md", "README.en.md", "LICENSE", ".gitignore", ".gitattributes"], "external": "", "files": 5, "outside": 0, "group": "设计与生成", "subs": [], "inner": [], "recent": 0, "last": "2026-09-12", "commits": 1, "together": []}], "commits": [{"hash": "94fc13d", "date": "2026-09-12", "subject": "Merge pull request #5 from magic-alt/feature/issue-2-factory-service-trace", "parts": [{"name": "模型工程", "n": 310, "files": ["simulink_project/architecture/servo_hub_sys.slx", "simulink_project/architecture/servo_hub_task_sys.slx", "simulink_project/controller/csp_planning.slx", "simulink_project/controller/cst_planning.slx", "simulink_project/controller/csv_planning.slx", "simulink_project/controller/current_ctl_loop_task.slx"]}, {"name": "对外通信", "n": 121, "files": ["communication/callback/cia402_od/Cia402_ObjectDictionary_Callback.c", "communication/callback/cia402_od/Cia402_ObjectDictionary_Callback.h", "communication/callback/cia402_od/Cia402_ObjectDictionary_Variable.c", "communication/callback/cia402_od/Cia402_ObjectDictionary_Variable.h", "communication/callback/cia402_od/master_cia402_callback.c", "communication/callback/mavlink/mavlink_callback.c"]}, {"name": "Y01 驱动板", "n": 66, "files": ["embedded_project/Y01/Board/EtherCAT/ecat_app_hw.c", "embedded_project/Y01/Board/EtherCAT/ecat_app_hw.h", "embedded_project/Y01/Board/EtherCAT/ecat_drv_sqi.c", "embedded_project/Y01/Board/EtherCAT/ecat_drv_sqi.h", "embedded_project/Y01/Board/board.c", "embedded_project/Y01/Board/board.h"]}, {"name": "控制算法", "n": 56, "files": ["simulink_code_gen/csp_planning.c", "simulink_code_gen/csp_planning.h", "simulink_code_gen/cst_planning.c", "simulink_code_gen/cst_planning.h", "simulink_code_gen/csv_planning.c", "simulink_code_gen/csv_planning.h"]}, {"name": "产品契约", "n": 26, "files": [".github/workflows/product-contract.yml", "contract/README.md", "contract/generated/canopen/covered_objects.eds", "contract/generated/canopen/od_metadata.csv", "contract/generated/golden/canopen_conversion_vectors.json", "contract/generated/host/error_code.csv"]}, {"name": "运动模式", "n": 21, "files": ["app/app_cyclic_sync_position_mode.c", "app/app_cyclic_sync_position_mode.h", "app/app_cyclic_sync_torque_mode.c", "app/app_cyclic_sync_torque_mode.h", "app/app_cyclic_sync_velocity_mode.c", "app/app_cyclic_sync_velocity_mode.h"]}, {"name": "代码生成工具", "n": 16, "files": ["cmake/CanopenCodegen.cmake", "tools/canopen_codegen/README.md", "tools/canopen_codegen/cia402_profile.json", "tools/canopen_codegen/codegen.json", "tools/canopen_codegen/generate.py", "tools/canopen_codegen/requirements-ui.txt"]}, {"name": "电机辨识", "n": 12, "files": ["app/Identify/app_id_dir_mode.c", "app/Identify/app_id_dir_mode.h", "app/Identify/app_id_elec_angle_mode.c", "app/Identify/app_id_elec_angle_mode.h", "app/Identify/app_id_elec_mode.c", "app/Identify/app_id_elec_mode.h"]}, {"name": "出厂诊断", "n": 12, "files": ["cmake/FactoryServiceCodegen.cmake", "service/factory/README.md", "service/factory/factory_service.c", "service/factory/factory_service.h", "service/factory/generated/factory_service_canopen.json", "service/factory/generated/factory_service_ids.h"]}, {"name": "虚拟驱动器", "n": 10, "files": [".vscode/launch.json", ".vscode/tasks.json", "CMakeLists.txt", "CMakePresets.json", "SIL_project/README.txt", "SIL_project/bsp_api_virtual.c"]}, {"name": "硬件接口", "n": 10, "files": ["board_public/bsp_api.h", "board_public/driver_parameter_hw_y01.h", "board_public/motor_parameter_acm80_abz.h", "board_public/motor_parameter_brt38m_bissc.h", "board_public/motor_parameter_gim6010_spi.h", "board_public/motor_parameter_ktm59xx_spi.h"]}, {"name": "通用工具", "n": 8, "files": ["common/math_lib/libdivide.h", "common/math_lib/yuanhub_math.h", "common/ring_buff/ringbuffer.c", "common/ring_buff/ringbuffer.h", "common/unit_conversion/coordinate_conversion.c", "common/unit_conversion/coordinate_conversion.h"]}, {"name": "安全监测", "n": 6, "files": ["app/app_brake_control.c", "app/app_brake_control.h", "app/app_motion_precondition.c", "app/app_motion_precondition.h", "app/app_status_check.c", "app/app_status_check.h"]}, {"name": "软件示波器", "n": 6, "files": ["common/software_scope/scope_app.c", "common/software_scope/scope_app.h", "common/software_scope/scope_map.c", "common/software_scope/scope_map.h", "common/software_scope/waveform_app.c", "common/software_scope/waveform_app.h"]}, {"name": "项目说明", "n": 5, "files": [".gitattributes", ".gitignore", "LICENSE", "README.en.md", "README.md"]}, {"name": "控制核心", "n": 4, "files": ["motor_control/motor_ctl_loop.c", "motor_control/motor_ctl_loop.h", "motor_control/motor_ctl_sm.c", "motor_control/motor_ctl_sm.h"]}, {"name": "参数总表", "n": 3, "files": ["database/data_param.c", "database/data_param.h", "database/data_type_define.h"]}, {"name": "参数保存", "n": 2, "files": ["app/app_store_param.c", "app/app_store_param.h"]}]}], "pending": {"parts": [{"part": "", "n": 1, "files": ["docs/parts.md"], "sensitive": ""}], "windows": [{"key": "?", "tool": "", "title": "", "task": "", "last": "", "where": "", "unknown": true, "n": 1, "guessed": 0, "parts": [{"name": "", "n": 1, "files": ["docs/parts.md"]}]}], "shared": []}, "links": [], "measured": ["Python"], "routes": [{"title": "一条运动指令怎么变成电机转动", "nodes": [{"name": "上位机", "note": "电脑或主控制器", "icon": "user", "ext": true}, {"name": "对外通信", "note": "", "icon": "", "ext": false}, {"name": "运动模式", "note": "", "icon": "", "ext": false}, {"name": "控制核心", "note": "", "icon": "", "ext": false}, {"name": "控制算法", "note": "", "icon": "", "ext": false}, {"name": "硬件接口", "note": "", "icon": "", "ext": false}, {"name": "Y01 驱动板", "note": "", "icon": "", "ext": false}, {"name": "电机", "note": "真的转起来", "icon": "spark", "ext": true}], "edges": [{"a": "上位机", "b": "对外通信", "label": "指令", "both": false}, {"a": "对外通信", "b": "运动模式", "label": "选模式", "both": false}, {"a": "运动模式", "b": "控制核心", "label": "目标值", "both": false}, {"a": "控制核心", "b": "控制算法", "label": "每拍计算", "both": false}, {"a": "控制核心", "b": "硬件接口", "label": "三相电压", "both": false}, {"a": "硬件接口", "b": "Y01 驱动板", "label": "落到芯片", "both": false}, {"a": "Y01 驱动板", "b": "电机", "label": "通电", "both": false}]}, {"title": "没有硬件时在电脑上跑", "nodes": [{"name": "调试软件", "note": "电脑上的上位机", "icon": "user", "ext": true}, {"name": "虚拟驱动器", "note": "", "icon": "", "ext": false}, {"name": "对外通信", "note": "", "icon": "", "ext": false}, {"name": "控制核心", "note": "", "icon": "", "ext": false}, {"name": "控制算法", "note": "", "icon": "", "ext": false}, {"name": "波形结果", "note": "回到调试软件", "icon": "layout", "ext": false}], "edges": [{"a": "调试软件", "b": "虚拟驱动器", "label": "本机网络", "both": false}, {"a": "虚拟驱动器", "b": "对外通信", "label": "收到消息", "both": false}, {"a": "对外通信", "b": "控制核心", "label": "参数指令", "both": false}, {"a": "控制核心", "b": "控制算法", "label": "含虚拟电机", "both": false}, {"a": "控制核心", "b": "波形结果", "label": "状态数据", "both": false}]}, {"title": "从模型到固件", "nodes": [{"name": "工程师", "note": "在 Simulink 里画控制器", "icon": "user", "ext": false}, {"name": "模型工程", "note": "", "icon": "", "ext": false}, {"name": "控制算法", "note": "", "icon": "", "ext": false}, {"name": "控制核心", "note": "", "icon": "", "ext": false}, {"name": "Y01 驱动板", "note": "", "icon": "", "ext": false}, {"name": "烧进驱动器", "note": "一份固件", "icon": "box", "ext": false}], "edges": [{"a": "工程师", "b": "模型工程", "label": "改模型", "both": false}, {"a": "模型工程", "b": "控制算法", "label": "生成 C 代码", "both": false}, {"a": "控制算法", "b": "控制核心", "label": "被调用", "both": false}, {"a": "控制核心", "b": "Y01 驱动板", "label": "一起编译", "both": false}, {"a": "Y01 驱动板", "b": "烧进驱动器", "label": "固件", "both": false}]}], "tasks": [], "tasksOld": 0};
+  var ICONS={
+    mic:'M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6',
+    speaker:'M5 9h3l5-4v14l-5-4H5zM16.5 9.5a4 4 0 0 1 0 5M19 7a8 8 0 0 1 0 10',
+    phone:'M6 3h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 12l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z',
+    play:'M4 5h16v11H4zM10.5 8.5l4 2-4 2zM8 20h8',
+    book:'M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h10',
+    search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4',
+    plug:'M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4',
+    user:'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4.5 20.5a7.5 7.5 0 0 1 15 0',
+    card:'M3 6h18v12H3zM3 10h18M7 15h3',
+    database:'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6',
+    mail:'M3 6h18v12H3zM3.5 7l8.5 6 8.5-6',
+    home:'M4 11l8-7 8 7M6 10v10h12V10M10 20v-6h4v6',
+    grid:'M4 4h7v9H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 15h7v5H4z',
+    spark:'M12 3l2 6.5 6.5 2-6.5 2-2 6.5-2-6.5-6.5-2 6.5-2z',
+    layout:'M4 4h16v16H4zM4 9h16M9 9v11',
+    lang:'M4 6h9M8.5 4v2M6 6c0 4 3 7 6 8M11 6c0 4-3 7-7 8M13 20l4-9 4 9M14.5 17h5',
+    cloud:'M7 18a4 4 0 0 1-.5-8 6 6 0 0 1 11.5 1.5 3.3 3.3 0 0 1-.5 6.5zM12 16v-5M9.5 13.5L12 11l2.5 2.5',
+    flask:'M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M8 15h8',
+    note:'M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 16h5',
+    box:'M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8',
+    lock:'M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3',
+    sign:'M12 4l9 15H3zM12 10v4M12 16.5v.5'
+  };
+  function ic(name){return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="'+(ICONS[name]||ICONS.box)+'"/></svg>';}
+  function pic(name){return '<span class="pic">'+ic(name)+'</span>';}
+  var T={zh:{
+    stamp:'生成于 {d}',sumA:'{n} 块，分在 {g} 个区。',sumOn:'亮着的 {k} 块有还没提交的改动。',sumOff:'现在没有未提交的改动。',sumUn:'另有 {n} 个改动的文件不在清单里。',sumUnOnly:'有 {n} 个还没提交的文件不在清单里。',
+    kOn:'这次动到了',kCare:'要小心',kDots:'近 {d} 天改得多不多',kWin:'哪个窗口在动',
+    pending:'还没提交的改动',landed:'{f} 个文件，落在 {k} 块',landedOff:'另有 {n} 个不在清单里',onlyOff:'{n} 个文件，都不在清单里',none:'点任意一块，看它是怎么工作的',
+    askList:'“未归类”的文件还不属于任何一块。想把它们画进地图，对 AI 说：',sayList:'把没归类的文件补进清单',
+    tasksH:'正在做的事',tasksN:'{n} 件',tasksWait:'{k} 件在等你',needsFlag:'等你 {n} 件',tasksOld:'另有 {n} 件很久没动、也没有说明的事，没有列出。',
+    tBare:'AI 还没有给这件事写给人看的说明。',tBareLong:'AI 记着这件事，但还没有写给人看的说明，所以这里只有它的名字和它动过哪几块。',
+    tUpdated:'{d} 更新',tStale:'{d} 更新，{n} 天没动了',tNeeds:'等你',tNext:'接下来',tRooms:'这件事动过哪几块',tNoRooms:'还没量到它动过哪一块。',tWin:'正在做这件事',
+    tAsk:'想让它接着做，开一个新窗口，对 AI 说：',tSay:'继续做“{n}”',tAskBare:'想在这里看到它做到哪了，对 AI 说：',tSayBare:'给“{n}”写一份给人看的说明',
+    noteTasks:'“正在做的事”是 AI 在任务记录里专门写给人看的几行；它动过哪几块，是从提交记录和未提交的改动里量出来的。',
+    sumWin:'{w} 个窗口在动。',nWin:'{w} 个窗口',fromOne:'来自“{t}”',who:'谁在动哪里',sep:'，',
+    unknownWin:'没记到是哪个窗口',unknownSub:'手动改的，或记录里找不到',lastAt:'最后改动 {t}',otherTree:'在 {b} 工作区',
+    both:'都动过',nowBy:'正在动这一块',
+    noteWin:'“谁在动哪里”读的是本机 Claude Code 和 Codex 的会话记录：编辑工具改的文件是确定的，命令改的文件按改动时间推断。',
+    care:'要小心',
+    partMeta:'{n} 个文件，近 {d} 天改动 {r} 次',
+    rules:'规矩',noRules:'还没有为这一块记下规矩。',moreRules:'还有 {n} 条',
+    pals:'常和它一起动',noPals:'它通常单独改动。',
+    how:'它是怎么工作的',aroundH:'它和周围的连接',aroundNote:'这张图是从代码里量出来的：谁用到它，它用到谁。它内部怎么工作，还没有画。',ask:'想看它内部怎么工作，对 AI 说：',say:'给“{n}”画流程图',aged:'这张图画于 {d}，之后这一块的代码改了 {n} 次。',agedMuch:'这张图画于 {d}，之后这一块的代码改了 {n} 次，可能已经过时。',nf:'{n} 个文件',extKey:'项目以外的服务',noFlow:'这一块还没有流程图。',
+    forCoders:'给看代码的人',
+    work:'每次工作踩到了哪几块',wide:'跨块的',all:'全部',noWork:'最近没有这样的工作。',
+    seeFiles:'看具体文件',more:'等 {n} 个',unmapped:'未归类',back:'回到全貌',
+    vPlan:'平面图',vRel:'关系图',vRoute:'主线',
+    capPlan:'项目分成哪几块。',capRel:'谁用到谁，从代码里量出来的。箭头指向被用到的一块。点一块，只看它的连线。',relTop:'多半在用别人',relBottom:'多半被别人用',capRoute:'一件事从头到尾怎么走。这是写下来的描述。',
+    uses:'它用到',usedBy:'用到它的',noUses:'没量到它用别的块。',noUsedBy:'没量到别的块用它。',nFiles:'{n} 个文件里用到',
+    inside:'里面有什么',outsideTag:'外来',outsideMore:'，另有 {n} 个外来文件',outsideLine:'不是这个项目自己写的：{w}',
+    mutual:'互相用到',lone:'没量到连接的',upKey:'橙色虚线：两边互相用到，或者下面的反过来用上面的',
+    loose:'虚线：代码里没量到这条连接（可能走网络，或是量不了的语言）',routeN:'主线 {n}',subMeta:'{n} 个文件，近 {d} 天改动 {r} 次',
+    noteRel:'“关系图”和“它用到”读的是 {l} 的引用语句，别的语言和走网络的连接量不到。',
+    note:'本页由 bearings 根据 {p} 和最近 {n} 次提交自动生成。流程图画的是清单里写下的描述；“常和它一起动”是统计出来的，不代表代码上一定有依赖。'
+  },en:{
+    stamp:'Generated {d}',sumA:'{n} parts in {g} wings.',sumOn:' The {k} lit parts have uncommitted changes.',sumOff:' Nothing is uncommitted right now.',sumUn:' {n} more changed files are not on the list.',sumUnOnly:' {n} uncommitted files are not on the list.',
+    kOn:'touched this time',kCare:'handle with care',kDots:'how busy in the last {d} days',kWin:'which window is on it',
+    pending:'Uncommitted changes',landed:'{f} files across {k} parts',landedOff:'{n} more not on the list',onlyOff:'{n} files, none on the list',none:'Pick any part to see how it works',
+    askList:'"Unmapped" files belong to no part yet. To put them on the map, say to the AI:',sayList:'Add the unmapped files to the parts list',
+    tasksH:'In progress',tasksN:'{n} tasks',tasksWait:'{k} waiting for you',needsFlag:'needs you: {n}',tasksOld:'{n} more have been quiet for a long time and have no lines for people; they are not listed.',
+    tBare:'The agent has not written its lines for people about this yet.',tBareLong:'The agent keeps a record of this task but has written no lines for people yet, so all there is to show is its name and the parts it touched.',
+    tUpdated:'updated {d}',tStale:'updated {d}, quiet for {n} days',tNeeds:'Waiting for you',tNext:'Next',tRooms:'The parts this task touched',tNoRooms:'No part measured for it yet.',tWin:'working on this now',
+    tAsk:'To have it carry on, open a new window and say to the AI:',tSay:'Continue "{n}"',tAskBare:'To see here where it stands, say to the AI:',tSayBare:'Write the lines for people for "{n}"',
+    noteTasks:'"In progress" shows the few lines the agent wrote for people in its task records; the parts a task touched are measured from commits and uncommitted changes.',
+    sumWin:' {w} windows are at work.',nWin:'{w} windows',fromOne:'from "{t}"',who:'Who is working where',sep:', ',
+    unknownWin:'No window on record',unknownSub:'changed by hand, or not in the records',lastAt:'last edit {t}',otherTree:'in the {b} worktree',
+    both:'both changed',nowBy:'working on this part now',
+    noteWin:'"Who is working where" reads the Claude Code and Codex session records on this machine: files changed with the edit tools are certain, files changed by shell commands are matched by time.',
+    care:'care',
+    partMeta:'{n} files, {r} changes in {d} days',
+    rules:'Rules',noRules:'No rules recorded for this part yet.',moreRules:'{n} more',
+    pals:'Usually changes with',noPals:'It usually changes alone.',
+    how:'How it works',aroundH:'What it connects to',aroundNote:'Measured from the code: who uses it and what it uses. How it works inside has not been drawn yet.',ask:'To see how it works inside, say to the AI:',say:'Draw the flow diagram for "{n}"',aged:'Drawn {d}; the code of this part has changed {n} times since.',agedMuch:'Drawn {d}; the code of this part has changed {n} times since, so it may be out of date.',nf:'{n} files',extKey:'a service outside the project',noFlow:'No flow diagram for this part yet.',
+    forCoders:'For people who read code',
+    work:'Where each piece of work stepped',wide:'Across parts',all:'All',noWork:'No such work recently.',
+    seeFiles:'See the files',more:'and {n} more',unmapped:'Unmapped',back:'Back to the overview',
+    vPlan:'Floor plan',vRel:'Relations',vRoute:'Routes',
+    capPlan:'The parts of the project.',capRel:'Who uses whom, measured from the code. Arrows point at the part being used. Pick a part to see only its links.',relTop:'mostly uses others',relBottom:'mostly used by others',capRoute:'How one thing travels from start to end. This is a written description.',
+    uses:'It uses',usedBy:'Used by',noUses:'No use of other parts was measured.',noUsedBy:'No other part was measured using it.',nFiles:'used in {n} files',
+    inside:'What is inside',outsideTag:'outside',outsideMore:', plus {n} files from outside',outsideLine:'Not written by this project: {w}',
+    mutual:'Use each other',lone:'No links measured',upKey:'orange dashes: the two use each other, or a lower part leans on a higher one',
+    loose:'Dashes: this link was not measured in the code (it may go over a network, or through a language that cannot be read)',routeN:'Route {n}',subMeta:'{n} files, {r} changes in {d} days',
+    noteRel:'"Relations" and "It uses" read the import statements of {l}; other languages and links over a network are not seen.',
+    note:'Generated by bearings from {p} and the last {n} commits. Flow diagrams draw what the parts list describes; "usually changes with" is a count, not proof of a code dependency.'
+  }}[D.lang];
+  function f(s,o){return s.replace(/\{(\w+)\}/g,function(_,k){return o[k];});}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function rich(s){return esc(s).replace(/`([^`]+)`/g,'<code>$1</code>');}
+  function $(id){return document.getElementById(id);}
+  function dots(n){var lv=n<=0?0:Math.min(5,1+Math.floor(Math.log(n)/Math.LN2));var h='<span class="dots">';for(var i=0;i<5;i++)h+='<i'+(i<lv?' class="f"':'')+'></i>';return h+'</span>';}
+
+  var groups=[],gi={};
+  D.parts.forEach(function(p){var g=p.group||'';if(!(g in gi)){gi[g]=groups.length;groups.push({name:g,parts:[]});}p.z='z'+(gi[g]%6);groups[gi[g]].parts.push(p);});
+  var byName={};D.parts.forEach(function(p){byName[p.name]=p;});
+  var subOf={};D.parts.forEach(function(p){p.subs.forEach(function(c){c.z=p.z;c.parent=p.name;if(!byName[c.name]&&!subOf[c.name])subOf[c.name]=c;});});
+  function unitNamed(name){return byName[name]||subOf[name]||null;}
+  function topOf(name){var u=unitNamed(name);return u?(u.parent||u.name):null;}
+  function linked(a,b){return D.links.some(function(x){return (x.a===a&&x.b===b)||(x.a===b&&x.b===a);});}
+  // A box in a flow that carries the name of a part is a door to that part. On a route, an arrow between
+  // two parts that the code does not connect is drawn dashed.
+  function linkOpt(self){
+    function door(n){var u=n.ext?null:unitNamed(n.name);return u&&u.name!==self?u:null;}
+    return {cls:function(n){var u=door(n);return u?' link '+u.z:(self?'':' plain');},
+      icon:function(n){var u=door(n);return n.icon||(u?u.icon:'');},
+      attr:function(n){return door(n)?' data-node="'+esc(n.name)+'" tabindex="0" role="button"':'';},
+      dash:function(e){if(self||!D.measured.length)return false;var a=topOf(e.a),b=topOf(e.b);return !!(a&&b&&a!==b&&!linked(a,b));}};
+  }
+  var hasPending=D.pending.parts.length>0;
+  var WIN=D.pending.windows||[],multi=WIN.length>1,known=WIN.filter(function(w){return !w.unknown;});
+  function winName(w){return w.unknown?T.unknownWin:(w.task||w.title||w.tool);}
+  function winSub(w){var a=w.unknown?[T.unknownSub]:[w.tool].concat(w.last?[f(T.lastAt,{t:w.last})]:[]);
+    if(w.where)a.push(f(T.otherTree,{b:w.where}));return a.join(T.sep);}
+  function wb(w,cls){return '<span class="wb'+(w.unknown?' q':'')+(cls?' '+cls:'')+'" title="'+esc(winName(w))+'">'+esc(w.key.charAt(0))+'</span>';}
+  function winsOn(name,list){return list.filter(function(w){return w.parts.some(function(x){return x.name===name;});});}
+  function winByKey(k){return WIN.filter(function(w){return w.key===k;})[0];}
+  var TASKS=D.tasks||[],curTask=null;
+
+  $('title').textContent=D.project;
+  $('stamp').textContent=f(T.stamp,{d:D.generated});
+  // Uncommitted work lands in parts, which light up, or in files no part owns (listed under the name ""), which
+  // cannot light anything: the summary has to say those apart, or new work outside the list would go unseen.
+  var litParts=D.pending.parts.filter(function(x){return x.part;}).length;
+  var offList=D.pending.parts.reduce(function(a,x){return a+(x.part?0:x.n);},0);
+  $('sum').textContent=f(T.sumA,{n:D.parts.length,g:groups.length})+
+    (litParts?f(T.sumOn,{k:litParts})+(offList?f(T.sumUn,{n:offList}):''):(offList?f(T.sumUnOnly,{n:offList}):T.sumOff))+
+    (hasPending&&multi&&known.length?f(T.sumWin,{w:known.length}):'');
+  $('key').innerHTML=(multi?'<span><span class="wb kwb">A</span>'+T.kWin+'</span>':'')+'<span><i class="kroom"></i>'+T.kOn+'</span><span><i class="kcare"></i>'+T.kCare+'</span><span style="color:var(--z0)">'+dots(8)+'<span style="color:var(--muted)">'+f(T.kDots,{d:D.recentDays})+'</span></span>';
+  $('note').textContent=f(T.note,{n:D.history,p:D.list})+(D.measured.length?' '+f(T.noteRel,{l:D.measured.join(T.sep)}):'')+(known.length?' '+T.noteWin:'')+(TASKS.length?' '+T.noteTasks:'');
+
+  // ---- flow diagram ----
+  function tw(s,size){var w=0;for(var i=0;i<s.length;i++)w+=s.charCodeAt(i)>255?size:size*0.56;return w;}
+  function wrap(s,size,max,lines){
+    var out=[],cur='';
+    for(var i=0;i<s.length;i++){var ch=s[i];
+      if(tw(cur+ch,size)>max&&cur){
+        if(out.length===lines-1){cur=cur.slice(0,-1)+'…';break;}
+        var cut=-1;for(var k=cur.length-1;k>=Math.max(1,cur.length-8);k--){if(' 、，；,/）)'.indexOf(cur[k])>=0){cut=k;break;}}
+        if(cut>0&&s.charCodeAt(i)<256){out.push(cur.slice(0,cut+1).replace(/\s+$/,''));cur=cur.slice(cut+1)+ch;}
+        else{out.push(cur);cur=ch===' '?'':ch;}
+      }else cur+=ch;}
+    if(cur)out.push(cur);return out;
+  }
+  function flowSvg(flow,avail,opt){
+    // Wide: layers run left to right and wrap onto further bands, like lines of text. Narrow: layers run top to bottom.
+    // An arrow that leaves its band, or steps back, travels in the gap under a band. Every such arrow gets a lane of
+    // its own there and its own spot on the box it leaves and the box it reaches, so no two run on top of each other.
+    var GX=104,GY=18,PAD=24,SKIP=30,LANE=20,nodes=flow.nodes,idx={};
+    avail=Math.max(280,avail||900);
+    nodes.forEach(function(n,i){idx[n.name]=i;n.out=[];n.inn=[];});
+    flow.edges.forEach(function(e){nodes[idx[e.a]].out.push(idx[e.b]);});
+    var state=[],back={};
+    nodes.forEach(function(_,i){if(state[i])return;(function dfs(u){state[u]=1;nodes[u].out.forEach(function(v){
+      if(state[v]===1)back[u+'>'+v]=1;else if(!state[v])dfs(v);});state[u]=2;})(i);});
+    var layer=nodes.map(function(){return 0;}),changed=true,guard=0;
+    while(changed&&guard++<nodes.length+2){changed=false;flow.edges.forEach(function(e){var u=idx[e.a],v=idx[e.b];
+      if(back[u+'>'+v]||u===v)return;if(layer[v]<layer[u]+1){layer[v]=layer[u]+1;changed=true;}});}
+    flow.edges.forEach(function(e){var u=idx[e.a],v=idx[e.b];if(!back[u+'>'+v])nodes[v].inn.push(u);});
+    var cols=[];nodes.forEach(function(n,i){(cols[layer[i]]=cols[layer[i]]||[]).push(i);});
+    var W=172,per=Math.floor((avail-PAD*2+GX)/(W+GX)),vertical=per<2,pos=[],bands=[],VW,VH;
+    function size(n,w){n.w=w;n.lab=wrap(n.name,14,w-62,2);n.nt=n.note?wrap(n.note,11.5,w-24,2):[];
+      n.top=12+Math.max(34,n.lab.length*18);n.h=n.top+(n.nt.length?5+n.nt.length*15:0)+11;}
+    function sortBySources(col,key){col.sort(function(a,b){function bc(i){var s=nodes[i].inn.filter(function(u){return pos[u];});
+      return s.length?s.reduce(function(t,u){return t+pos[u][key];},0)/s.length:1e6+i;}return bc(a)-bc(b);});}
+    if(vertical){
+      var y=PAD;
+      cols.forEach(function(col,c){var k=col.length,w=Math.min(200,(avail-PAD*2-(k-1)*12)/k);
+        col.forEach(function(i){size(nodes[i],w);});
+        if(c>0)sortBySources(col,'cx');
+        var rowH=Math.max.apply(null,col.map(function(i){return nodes[i].h;})),x=(avail-(k*w+(k-1)*12))/2;
+        col.forEach(function(i){pos[i]={x:x,y:y,cx:x+w/2,cy:y+nodes[i].h/2,band:c};x+=w+12;});
+        y+=rowH+46;});
+      VW=avail;VH=y-46+PAD;
+    }else{
+      nodes.forEach(function(n){size(n,W);});
+      cols.forEach(function(col,c){var r=Math.floor(c/per);(bands[r]=bands[r]||{cols:[],h:0,lanes:[]}).cols.push(col);
+        col.h=col.reduce(function(t,i){return t+nodes[i].h+GY;},-GY);bands[r].h=Math.max(bands[r].h,col.h);});
+      flow.edges.forEach(function(e){var lu=layer[idx[e.a]],lv=layer[idx[e.b]],bu=Math.floor(lu/per),bv=Math.floor(lv/per);
+        if(lu===lv)e.kind='same';
+        else if(bu===bv&&lv-lu>1){e.kind='skip';bands[bu].skip=true;}
+        else if(bu===bv&&lv>lu)e.kind='next';
+        else{e.kind='lane';e.gap=Math.min(bu,bv);e.lane=bands[e.gap].lanes.length;bands[e.gap].lanes.push(e);}});
+      var top=PAD;
+      bands.forEach(function(bd,r){if(bd.skip)top+=SKIP;bd.top=top;
+        bd.cols.forEach(function(col,k){
+          if(r*per+k>0)sortBySources(col,'cy');
+          var y=top+(bd.h-col.h)/2,x=PAD+k*(W+GX);
+          col.forEach(function(i,q){pos[i]={x:x,y:y,cx:x+W/2,cy:y+nodes[i].h/2,band:r,first:q===0,last:q===col.length-1,ports:{}};y+=nodes[i].h+GY;});});
+        var more=r<bands.length-1;bd.floor=top+bd.h;
+        top+=bd.h+(bd.lanes.length?24+(bd.lanes.length-1)*LANE+(more?34:10):(more?40:0));});
+      var used=Math.min(per,cols.length);VW=PAD*2+used*W+(used-1)*GX;VH=top+PAD;
+      // which side of its box each lane arrow leaves by and arrives at, and its place among the arrows sharing that side
+      bands.forEach(function(bd){bd.lanes.forEach(function(e){var u=idx[e.a],v=idx[e.b],a=pos[u],b=pos[v];
+        e.s1=a.band===e.gap?(a.last?'b':'r'):(a.first?'t':'l');e.s2=b.band===e.gap?(b.last?'b':'r'):(b.first?'t':'l');
+        e.k1=a.ports[e.s1]=(a.ports[e.s1]||0);a.ports[e.s1]++;e.k2=b.ports[e.s2]=(b.ports[e.s2]||0);b.ports[e.s2]++;});});
+    }
+    function port(i,side,k){var p=pos[i],n=nodes[i],off=k-(p.ports[side]-1)/2;
+      if(side==='b')return {x:p.cx+off*20,y:p.y+n.h,ex:0,ey:2};
+      if(side==='t')return {x:p.cx+off*20,y:p.y,ex:0,ey:-2};
+      if(side==='r')return {x:p.x+n.w,y:p.cy+off*14,gx:p.x+n.w+14+k*8,ex:2,ey:0};
+      return {x:p.x,y:p.cy+off*14,gx:p.x-14-k*8,ex:-2,ey:0};}
+    var s='',labs=[],movers='';
+    flow.edges.forEach(function(e,k){
+      var u=idx[e.a],v=idx[e.b],a=pos[u],b=pos[v],A=nodes[u],B=nodes[v],d,lx,ly;
+      if(vertical||e.kind==='same'){
+        var down=a.y<=b.y,y1=down?a.y+A.h:a.y,y2=down?b.y-2:b.y+B.h+2,my=(y1+y2)/2;
+        d='M'+a.cx+','+y1+' C'+a.cx+','+my+' '+b.cx+','+my+' '+b.cx+','+y2;lx=(a.cx+b.cx)/2;ly=my;
+      }else if(e.kind==='skip'){ // jumps over a column: go over the top of the band
+        var ty=bands[a.band].top-SKIP+10;
+        d='M'+a.cx+','+a.y+' L'+a.cx+','+ty+' L'+b.cx+','+ty+' L'+b.cx+','+(b.y-2);lx=(a.cx+b.cx)/2;ly=ty;
+      }else if(e.kind==='next'){
+        var x1=a.x+A.w,x2=b.x-2,mx=(x1+x2)/2;
+        d='M'+x1+','+a.cy+' C'+mx+','+a.cy+' '+mx+','+b.cy+' '+x2+','+b.cy;lx=mx;ly=(a.cy+b.cy)/2-14;
+      }else{ // onto another band, or a step back: along its own lane in the gap under a band
+        var bd=bands[e.gap],gy=bd.floor+24+e.lane*LANE,S=port(u,e.s1,e.k1),E=port(v,e.s2,e.k2),xs=S.gx==null?S.x:S.gx,xe=E.gx==null?E.x:E.gx;
+        d='M'+S.x+','+S.y+(S.gx==null?'':' L'+S.gx+','+S.y)+' L'+xs+','+gy+' L'+xe+','+gy+(E.gx==null?'':' L'+E.gx+','+E.y)+' L'+(E.x+E.ex)+','+(E.y+E.ey);
+        lx=xs+(xe-xs)*(e.lane+1)/(bd.lanes.length+1);ly=gy; // labels step along the gap so they never stack
+      }
+      s+='<path class="fe'+(opt&&opt.dash(e)?' loose':'')+'" d="'+d+'" marker-end="url(#fah)"'+(e.both?' marker-start="url(#fah)"':'')+'/>';
+      movers+='<circle class="fdot" r="3.6"><animateMotion dur="2.6s" begin="'+(k*0.45).toFixed(2)+'s" repeatCount="indefinite" path="'+d+'"/></circle>';
+      if(e.label)labs.push({t:e.label,x:lx,y:ly,w:tw(e.label,12)+14,lane:e.kind==='lane'});
+    });
+    // no label may sit on another: one on a lane slides along it, any other steps down
+    var labels='';
+    labs.forEach(function(l,i){
+      for(var tries=0;tries<8;tries++){var hit=null;
+        for(var j=0;j<i;j++){var m=labs[j];if(Math.abs(l.x-m.x)<(l.w+m.w)/2+4&&Math.abs(l.y-m.y)<22){hit=m;break;}}
+        if(!hit)break;
+        if(l.lane)l.x=hit.x+(hit.w+l.w)/2+8;else l.y=hit.y+23;}
+      l.x=Math.max(l.w/2+2,Math.min(VW-l.w/2-2,l.x));VH=Math.max(VH,l.y+16);
+      labels+='<rect class="felbg" x="'+(l.x-l.w/2)+'" y="'+(l.y-10.5)+'" width="'+l.w+'" height="21" rx="6"/><text class="fel" x="'+l.x+'" y="'+(l.y+4)+'" text-anchor="middle">'+esc(l.t)+'</text>';});
+    s+=movers;
+    nodes.forEach(function(n,i){var p=pos[i];
+      s+='<g class="fn'+(n.ext?' ext':'')+(opt?opt.cls(n):'')+'"'+(opt?opt.attr(n):'')+'><rect class="fb" x="'+p.x+'" y="'+p.y+'" width="'+n.w+'" height="'+n.h+'" rx="10"/>'+
+        '<rect class="fp" x="'+(p.x+11)+'" y="'+(p.y+11)+'" width="34" height="34" rx="8"/><g transform="translate('+(p.x+17.5)+','+(p.y+17.5)+') scale(.875)"><path class="fi" d="'+(ICONS[opt?opt.icon(n):n.icon]||ICONS.box)+'"/></g>';
+      var ly=p.y+(n.lab.length===1?33:25);
+      n.lab.forEach(function(t,k){s+='<text class="fl" x="'+(p.x+54)+'" y="'+(ly+k*18)+'">'+esc(t)+'</text>';});
+      n.nt.forEach(function(t,k){s+='<text class="fnote" x="'+(p.x+12)+'" y="'+(p.y+n.top+16+k*15)+'">'+esc(t)+'</text>';});
+      s+='</g>';});
+    return '<svg class="flow" width="'+VW+'" height="'+VH+'" viewBox="0 0 '+VW+' '+VH+'" role="img" aria-label="'+esc(flow.edges.map(function(e){return e.a+' → '+e.b+(e.label?'（'+e.label+'）':'');}).join('；'))+'">'+
+      '<defs><marker id="fah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="fah" d="M0,0 L10,5 L0,10 z"/></marker></defs>'+s+labels+'</svg>';
+  }
+  var curFlow=null,curOpt=null;
+  function wire(c){Array.prototype.forEach.call(c.querySelectorAll('[data-node]'),function(g){
+    function go(){var u=unitNamed(g.getAttribute('data-node'));if(!u)return;if(u.parent)selectSub(u.parent,u.name);else selectPart(u.name);}
+    g.addEventListener('click',go);g.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go();}});});}
+  function drawFlow(){var box=$('canvas');if(box&&curFlow){box.innerHTML=flowSvg(curFlow,box.clientWidth-26,curOpt);wire(box);}}
+  var rz;window.addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(function(){drawFlow();drawInner();drawAlt();},120);});
+
+  // ---- who uses whom ----
+  // Parts in bands. A part that mostly uses others sits high; a part that is mostly used sits low. The measure
+  // is use going out over all use touching the part, so one stray import cannot move a part. Most arrows then
+  // point down. The ones worth a look are drawn in the warning colour: two parts that use each other, and a
+  // part low down that leans on one higher up.
+  function mutuals(units,links){var w={},out=[];links.forEach(function(e){w[e.a+'\n'+e.b]=e.n;});
+    links.forEach(function(e){var back=w[e.b+'\n'+e.a]||0;if(e.a<e.b&&Math.min(e.n,back)>=2&&Math.min(e.n,back)*4>=Math.max(e.n,back))out.push([e.a,e.b,Math.min(e.n,back)]);});
+    return out.sort(function(x,y){return y[2]-x[2];});}
+  function relSvg(units,links,sel,avail){
+    var NW=156,NH=46,GX=12,GY=58,PAD=14,LEFT=0,idx={},w={},use={},used={},pairs=[],maxN=1;
+    avail=Math.max(300,avail||900);
+    units.forEach(function(u,i){idx[u.name]=i;});
+    links.forEach(function(e){var a=idx[e.a],b=idx[e.b];if(a==null||b==null)return;w[a+'>'+b]=e.n;use[a]=(use[a]||0)+e.n;used[b]=(used[b]||0)+e.n;maxN=Math.max(maxN,e.n);});
+    var band=units.map(function(_,i){var o=use[i]||0,n=used[i]||0;return o+n?Math.min(3,Math.floor(4*o/(o+n))):-1;}); // 3 mostly uses, 0 mostly used
+    Object.keys(w).forEach(function(k){var q=k.split('>'),a=+q[0],b=+q[1],back=w[b+'>'+a]||0;
+      if(w[k]>back||(w[k]===back&&a<b)){var e={a:a,b:b,n:w[k],back:back};
+        e.two=back>=2&&back*4>=e.n;
+        e.real=e.n>=2&&e.n*12>=use[a];               // more than a stray import
+        e.hot=e.two||(e.real&&band[a]<band[b]);      // a part low down leaning on one higher up
+        pairs.push(e);}});
+    pairs.sort(function(x,y){return y.n-x.n;});
+    var per=Math.floor((avail-PAD*2+GX)/(NW+GX));
+    if(per<2){per=2;NW=Math.floor((avail-PAD*2-GX)/2);}
+    var pos=[],y=PAD+18,rows=0;
+    function place(row){for(var k=0;k<row.length;k+=per){var line=row.slice(k,k+per),x=(avail-(line.length*NW+(line.length-1)*GX))/2;
+      line.forEach(function(i){pos[i]={x:x,y:y,cx:x+NW/2};x+=NW+GX;});y+=NH+26;}}
+    for(var L=3;L>=0;L--){var row=[];units.forEach(function(_,i){if(band[i]===L)row.push(i);});if(!row.length)continue;place(row);y+=GY-26;rows++;}
+    var lastY=y-GY,lone=[],sepY=0;units.forEach(function(_,i){if(band[i]<0)lone.push(i);});
+    if(lone.length){y+=22;sepY=y-GY/2+10;y+=22;place(lone);y+=GY-26;}
+    var VH=y-GY+PAD+(lone.length?6:26),si=sel!=null&&idx[sel]!=null?idx[sel]:-1,near={},shown=[];
+    if(si>=0)pairs.forEach(function(e){if(e.a===si||e.b===si){shown.push(e);near[e.a]=near[e.b]=true;}});
+    else if(per>3){var given={},hot=0;pairs.forEach(function(e){if(e.hot){if(hot++<6)shown.push(e);return;}if(!e.real)return;given[e.a]=(given[e.a]||0)+1;if(given[e.a]<=2)shown.push(e);});}
+    function head(id,cls){return '<marker id="'+id+'" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path class="'+cls+'" d="M0,0 L10,5 L0,10 z"/></marker>';}
+    var s='<svg class="rel" width="'+avail+'" height="'+VH+'" viewBox="0 0 '+avail+' '+VH+'" role="img" aria-label="'+esc(links.slice(0,40).map(function(e){return e.a+' → '+e.b;}).join('；'))+'"><defs>'+head('rah','rah')+head('rahu','rahu')+'</defs>';
+    if(rows>1)s+='<text class="rlone" x="'+PAD+'" y="'+(PAD+6)+'">'+esc(T.relTop)+'</text><text class="rlone" x="'+PAD+'" y="'+(lastY+36)+'">'+esc(T.relBottom)+'</text>';
+    if(sepY)s+='<line class="rsep" x1="'+PAD+'" x2="'+(avail-PAD)+'" y1="'+sepY+'" y2="'+sepY+'"/><text class="rlone" x="'+PAD+'" y="'+(sepY+16)+'">'+esc(T.lone)+'</text>';
+    shown.forEach(function(e){var a=pos[e.a],b=pos[e.b],d,m=e.hot?'rahu':'rah';
+      if(Math.abs(a.y-b.y)<1){ // side by side: an arc under the row
+        var dip=a.y+NH+14+Math.min(16,Math.abs(a.cx-b.cx)/16);
+        d='M'+a.cx+','+(a.y+NH+(e.two?3:0))+' C'+a.cx+','+dip+' '+b.cx+','+dip+' '+b.cx+','+(b.y+NH+3);
+      }else{var down=a.y<b.y,y1=down?a.y+NH+(e.two?3:0):a.y-(e.two?3:0),y2=down?b.y-3:b.y+NH+3,my=(y1+y2)/2,bow=0;
+        if(Math.abs(y2-y1)>NH+GY&&Math.abs(a.cx-b.cx)<NW*0.7)bow=(a.cx<avail/2?-1:1)*(NW/2+26); // past a row in the same column: swing round it
+        d='M'+a.cx+','+y1+' C'+(a.cx+bow)+','+my+' '+(b.cx+bow)+','+my+' '+b.cx+','+y2;}
+      s+='<path class="re'+(si>=0?' on':'')+(e.hot?' up':'')+'" stroke-width="'+(1.1+2.4*Math.sqrt(e.n/maxN)).toFixed(1)+'" d="'+d+'" marker-end="url(#'+m+')"'+(e.two?' marker-start="url(#'+m+')"':'')+'/>';});
+    units.forEach(function(u,i){var q=pos[i],lab=wrap(u.name,13,NW-54,2);
+      s+='<g class="rn '+u.z+(i===si?' sel':'')+(si>=0&&i!==si&&!near[i]?' dim':'')+(u.external?' ext':'')+'" data-node="'+esc(u.name)+'" tabindex="0" role="button"><title>'+esc(u.name)+'</title>'+
+        '<rect class="rb" x="'+q.x+'" y="'+q.y+'" width="'+NW+'" height="'+NH+'" rx="9"/><rect class="rp" x="'+(q.x+8)+'" y="'+(q.y+8)+'" width="30" height="30" rx="7"/>'+
+        '<g transform="translate('+(q.x+13)+','+(q.y+13)+') scale(.83)"><path class="ri" d="'+(ICONS[u.icon]||ICONS.box)+'"/></g>';
+      lab.forEach(function(t,k){s+='<text x="'+(q.x+46)+'" y="'+(q.y+(lab.length===1?28:20)+k*16)+'">'+esc(t)+'</text>';});
+      s+='</g>';});
+    return s+'</svg>';
+  }
+  function relNotes(units,links){var m=mutuals(units,links);if(!m.length)return '';
+    return '<div class="undernote"><b>'+T.mutual+'</b>'+m.slice(0,5).map(function(x){return '<span>'+esc(x[0])+' ⇄ '+esc(x[1])+'</span>';}).join('')+(m.length>5?'<span>'+f(T.more,{n:m.length-5})+'</span>':'')+'<span>'+T.upKey+'</span></div>';}
+
+  // ---- three ways to look ----
+  var view='plan',selName=null,curRoute=0,curPart=null,innerView='plan';
+  var views=[['plan',T.vPlan,T.capPlan]];
+  if(D.links.length)views.push(['rel',T.vRel,T.capRel]);
+  if(D.routes.length)views.push(['route',T.vRoute,T.capRoute]);
+  function setView(v){view=v;views.forEach(function(x){$('view-'+x[0]).setAttribute('aria-pressed',String(x[0]===v));if(x[0]===v)$('vcap').textContent=x[2];});
+    $('plan').hidden=v!=='plan';$('alt').hidden=v==='plan';drawAlt();}
+  function drawAlt(){var box=$('alt');if(view==='plan'){box.innerHTML='';return;}
+    var avail=box.clientWidth-26,h;
+    if(view==='rel')h=relSvg(D.parts,D.links,selName,avail)+relNotes(D.parts,D.links);
+    else{var r=D.routes[curRoute];h=flowSvg(r,avail,linkOpt(null));
+      if(/class="fe loose"/.test(h))h+='<div class="undernote">'+T.loose+'</div>';
+      if(D.routes.length>1)h='<div class="rchips" style="margin:0 0 14px">'+D.routes.map(function(x,i){return '<button type="button" data-route="'+i+'" aria-pressed="'+(i===curRoute)+'">'+esc(x.title||f(T.routeN,{n:i+1}))+'</button>';}).join('')+'</div>'+h;
+      else if(r.title)h='<h3 style="margin:0 0 12px">'+esc(r.title)+'</h3>'+h;}
+    box.innerHTML=h;wire(box);
+    Array.prototype.forEach.call(box.querySelectorAll('[data-route]'),function(b){b.addEventListener('click',function(){curRoute=+b.getAttribute('data-route');drawAlt();});});}
+  function drawInner(){var box=$('inner');if(box&&curPart){box.innerHTML=relSvg(curPart.subs,curPart.inner,null,box.clientWidth-26)+relNotes(curPart.subs,curPart.inner);wire(box);}}
+  if(views.length>1){$('viewbar').hidden=false;$('vcap').textContent=T.capPlan;
+    views.forEach(function(v){var b=document.createElement('button');b.type='button';b.id='view-'+v[0];b.textContent=v[1];b.setAttribute('aria-pressed',String(v[0]===view));
+      b.addEventListener('click',function(){setView(v[0]);});$('views').appendChild(b);});}
+
+  // ---- the building ----
+  var rooms={},planCols=[];
+  groups.forEach(function(g){
+    var n=g.parts.length,cols=n<=2?1:(n<=8?2:3);planCols.push(cols+'fr');
+    var w=document.createElement('section');w.className='wing '+g.parts[0].z;
+    w.innerHTML=(g.name?'<h2>'+esc(g.name)+'</h2>':'')+'<div class="rooms" style="--cols:'+cols+'"></div>';
+    g.parts.forEach(function(p,i){
+      var b=document.createElement('button');b.type='button';b.id='room-'+D.parts.indexOf(p);b.className='room'+(p.sensitive?' care':'')+(p.external?' outside':'');
+      if(i===n-1&&n%cols)b.style.gridColumn='span '+(cols-n%cols+1);
+      b.setAttribute('aria-label',p.name);
+      b.innerHTML='<span class="tr"><span class="who"></span><span class="cnt"></span></span>'+(p.sensitive?'<span class="lock">'+ic('lock')+'</span>':'')+pic(p.icon)+'<span class="nm">'+esc(p.name)+'</span>'+
+        (p.subs.length?'<span class="mini">'+p.subs.slice(0,14).map(function(c){return '<i'+(c.external?' class="x"':'')+'></i>';}).join('')+'</span>':'')+dots(p.recent);
+      b.addEventListener('click',function(){selectPart(p.name);});
+      w.querySelector('.rooms').appendChild(b);rooms[p.name]=b;
+    });
+    $('plan').appendChild(w);
+  });
+  $('plan').style.gridTemplateColumns=planCols.join(' ');
+  function light(map,sel,wins){ // with a room picked, the map marks its companions; otherwise it lights where work landed
+    var any=Object.keys(map).length>0;
+    D.parts.forEach(function(p){
+      var r=rooms[p.name],on=Object.prototype.hasOwnProperty.call(map,p.name);
+      r.classList.toggle('lit',on&&!sel);r.classList.toggle('mate',on&&!!sel);r.classList.toggle('sel',p.name===sel);
+      r.classList.toggle('dim',!sel&&any&&!on);
+      r.querySelector('.cnt').textContent=on?map[p.name]:'';
+      var here=on&&wins?winsOn(p.name,wins):[]; // which windows are in this room
+      r.querySelector('.who').innerHTML=here.slice(0,3).map(function(w){return wb(w);}).join('')+(here.length>3?'<span class="more">+</span>':'');
+    });
+  }
+  var quiet=true;
+  function setHash(h){try{history.replaceState(null,'',h?'#'+h:location.pathname+location.search);}catch(e){}}
+  function setStage(html,cls){var c=$('stage');c.className='stage '+(cls||'z0');c.innerHTML=html;
+    Array.prototype.forEach.call(c.querySelectorAll('[data-go]'),function(b){b.addEventListener('click',function(){var g=b.getAttribute('data-go');if(g==='home')home();else selectPart(g);});});
+    Array.prototype.forEach.call(c.querySelectorAll('[data-sub]'),function(b){b.addEventListener('click',function(){selectSub(curPart.name,curPart.subs[+b.getAttribute('data-sub')].name);});});
+    Array.prototype.forEach.call(c.querySelectorAll('[data-inner]'),function(b){b.addEventListener('click',function(){innerView=b.getAttribute('data-inner');selectPart(curPart.name);});});
+    wire(c);
+    Array.prototype.forEach.call(c.querySelectorAll('[data-win]'),function(b){b.addEventListener('click',function(){var k=+b.getAttribute('data-win');home(curWin===k?null:k);});});
+    if(!quiet)c.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  function unselRows(){Array.prototype.forEach.call(document.querySelectorAll('.trow.sel'),function(r){r.classList.remove('sel');});
+    Array.prototype.forEach.call(document.querySelectorAll('.tcard[aria-pressed="true"]'),function(r){r.setAttribute('aria-pressed','false');});curTask=null;}
+  function backBtn(){return '<button class="back" type="button" data-go="home">'+T.back+'</button>';}
+  function total(list){return list.reduce(function(a,x){return a+x.n;},0);}
+  function landedText(list){ // "N files across K parts", counting apart the files that no part owns
+    var on=list.filter(function(x){return byName[x.name];}),off=total(list)-total(on);
+    if(!on.length)return f(T.onlyOff,{n:off});
+    return f(T.landed,{f:total(on),k:on.length})+(off?T.sep+f(T.landedOff,{n:off}):'');}
+  function stackBar(list){return '<div class="stack" role="img" aria-label="'+esc(list.map(function(x){return (byName[x.name]?x.name:T.unmapped)+' '+x.n;}).join(', '))+'">'+list.map(function(x){
+    var p=byName[x.name];return '<i class="'+(p?p.z:'zx')+'" style="flex:'+x.n+' 0 0"></i>';}).join('')+'</div>';}
+  function legend(list){
+    var h='<div class="legend">';
+    list.forEach(function(x){var p=byName[x.name],flag=p&&p.sensitive?'<span class="flag">'+T.care+'</span>':'';
+      h+='<div class="lrow '+(p?p.z:'zx')+'">'+pic(p?p.icon:'box')+'<b>'+esc(p?x.name:T.unmapped)+'</b><span class="n">'+flag+x.n+'</span></div>';});
+    if(!list.some(function(x){return x.files.length;}))return h+'</div>'; // counted from history: no file names to show
+    return h+'</div><details><summary>'+T.seeFiles+'</summary><div class="in">'+list.map(function(x){
+      return '<div><b>'+esc(byName[x.name]?x.name:T.unmapped)+'</b></div>'+x.files.map(function(fl){return '<code>'+esc(fl)+'</code>';}).join('')+(x.n>x.files.length?'<span class="sub">'+f(T.more,{n:x.n-x.files.length})+'</span>':'');}).join('')+'</div></details>';
+  }
+
+  var curWin=null;
+  function lanes(){ // one row per window; picking a row keeps only that window's rooms lit
+    var h='<div class="blk"><h3>'+T.who+'</h3><div class="lanes">';
+    WIN.forEach(function(w,k){
+      h+='<button type="button" class="lane" data-win="'+k+'" aria-pressed="'+(curWin===k)+'">'+wb(w)+
+        '<span class="lt">'+esc(winName(w))+'<span class="ls">'+esc(winSub(w))+'</span></span><span class="chips">'+
+        w.parts.map(function(x){var p=byName[x.name];return '<span class="chip '+(p?p.z:'zx')+'">'+pic(p?p.icon:'box')+esc(p?x.name:T.unmapped)+'<span class="n">'+x.n+'</span></span>';}).join('')+'</span></button>';});
+    h+='</div>';
+    (D.pending.shared||[]).slice(0,3).forEach(function(x){
+      h+='<div class="both"><span class="wbs">'+x.who.map(function(key){return wb(WIN.filter(function(w){return w.key===key;})[0]);}).join('')+'</span>'+T.both+'<code>'+esc(x.file)+'</code></div>';});
+    return h+'</div>';
+  }
+  function home(k){
+    unselRows();setHash('');curFlow=null;curPart=null;curWin=(k==null||!multi)?null:k;
+    if(selName!==null){selName=null;if(view==='rel')drawAlt();}
+    if(!hasPending){light({},null);setStage('<div class="band"><h2>'+T.none+'</h2></div>');return;}
+    var src=curWin==null?D.pending.parts.map(function(x){return {name:x.part,n:x.n,files:x.files};}):WIN[curWin].parts;
+    var list=src.map(function(x){return {name:x.name,n:x.n,files:x.files};}),map={};
+    list.forEach(function(x){if(byName[x.name])map[x.name]=x.n;});
+    light(map,null,multi?(curWin==null?WIN:[WIN[curWin]]):null);
+    var meta=landedText(list);
+    if(multi&&curWin==null&&known.length)meta+=T.sep+f(T.nWin,{w:known.length});
+    else if(!multi&&known.length)meta+=T.sep+f(T.fromOne,{t:winName(known[0])});
+    // files that no part owns: say what that means and the sentence that puts them on the map
+    var askList=list.some(function(x){return !byName[x.name];})?'<div class="ask">'+T.askList+'<span class="say">'+esc(T.sayList)+'</span></div>':'';
+    setStage('<div class="band"><h2>'+(curWin==null?T.pending:wb(WIN[curWin])+' '+esc(winName(WIN[curWin])))+'</h2><span class="meta">'+meta+'</span></div><div class="body">'+
+      (multi?lanes():'')+stackBar(list)+legend(list)+askList+'</div>');
+  }
+  // A part nobody has drawn yet still has a picture: who uses it and whom it uses, taken from the measured links.
+  function around(u,links,find){
+    var ins={},outs={},names=[];
+    links.forEach(function(x){if(x.a===u.name&&find(x.b))outs[x.b]=x.n;if(x.b===u.name&&find(x.a))ins[x.a]=x.n;});
+    Object.keys(ins).concat(Object.keys(outs)).forEach(function(k){if(names.indexOf(k)<0)names.push(k);});
+    if(!names.length)return null;
+    function size(k){return Math.max(ins[k]||0,outs[k]||0);}
+    names.sort(function(x,y){return size(y)-size(x);});
+    var left=[],right=[],edges=[];
+    names.forEach(function(k){var user=(ins[k]||0)>=(outs[k]||0),side=user?left:right;if(side.length>=4)return;side.push({name:k,note:'',icon:'',ext:false});
+      edges.push({a:user?k:u.name,b:user?u.name:k,label:f(T.nf,{n:size(k)}),both:!!(ins[k]&&outs[k])});});
+    return {nodes:left.concat([{name:u.name,note:'',icon:u.icon,ext:false}],right),edges:edges};
+  }
+  function flowBlock(u,links,find){
+    curFlow=u.flow&&u.flow.nodes.length?u.flow:null;curOpt=linkOpt(u.name);
+    if(curFlow)return '<div class="blk"><h3>'+T.how+'</h3><div class="canvas" id="canvas"></div>'+
+      (curFlow.nodes.some(function(n){return n.ext;})?'<div class="fkey"><i></i>'+T.extKey+'</div>':'')+
+      // a diagram is a description: say when it was drawn and how much the code has moved since
+      (u.since?'<div class="aged'+(u.since>=8?' much':'')+'">'+(u.since>=8?ic('sign'):'')+'<span>'+f(u.since>=8?T.agedMuch:T.aged,{d:u.drawn,n:u.since})+'</span></div>':'')+'</div>';
+    var ask='<div class="ask">'+T.ask+'<span class="say">'+esc(f(T.say,{n:u.name}))+'</span></div>'; // nobody has drawn it: how to ask
+    curFlow=links&&links.length?around(u,links,find):null;
+    if(curFlow)return '<div class="blk"><h3>'+T.aroundH+'</h3><div class="canvas" id="canvas"></div><div class="fkey">'+T.aroundNote+'</div>'+(u.external?'':ask)+'</div>';
+    return '<div class="blk"><h3>'+T.how+'</h3><div class="empty">'+T.noFlow+'</div>'+(u.external?'':ask)+'</div>';
+  }
+  function chips(list,attr){return '<div class="pals">'+list.slice(0,8).map(function(x){
+    return '<button type="button" class="pal '+x.u.z+'" '+attr(x.u)+' title="'+esc(f(T.nFiles,{n:x.n}))+'">'+pic(x.u.icon)+esc(x.u.name)+'<span class="pct">'+x.n+'</span></button>';}).join('')+
+    (list.length>8?'<span class="sub">'+f(T.more,{n:list.length-8})+'</span>':'')+'</div>';}
+  function usesBlocks(name,links,find,attr){ // measured: what this one imports, and what imports it
+    function side(mine,other,title,none){var list=links.filter(function(x){return x[mine]===name&&find(x[other]);}).map(function(x){return {u:find(x[other]),n:x.n};});
+      return '<div class="blk"><h3>'+title+'</h3>'+(list.length?chips(list,attr):'<p class="sub">'+none+'</p>')+'</div>';}
+    return side('a','b',T.uses,T.noUses)+side('b','a',T.usedBy,T.noUsedBy);
+  }
+  function rulesBlock(u){
+    var h='<div class="blk"><h3>'+T.rules+'</h3>';
+    if(u.rules.length){
+      var sign=function(r){var m=r.match(/^(.*?)[（(]([^（）()]*)[）)]\s*$/);return '<div class="sign">'+ic('sign')+'<span>'+rich(m?m[1]:r)+(m?'<span class="src">'+esc(m[2])+'</span>':'')+'</span></div>';};
+      h+='<div class="signs">'+u.rules.slice(0,2).map(sign).join('')+'</div>';
+      if(u.rules.length>2)h+='<details><summary>'+f(T.moreRules,{n:u.rules.length-2})+'</summary><div class="in signs">'+u.rules.slice(2).map(sign).join('')+'</div></details>';
+    }else h+='<p class="sub">'+T.noRules+'</p>';
+    return h+'</div>';
+  }
+  function pathsBlock(u){return '<div class="blk"><details><summary>'+T.forCoders+'</summary><div class="in tags">'+u.paths.map(function(x){return '<code>'+esc(x)+'</code>';}).join('')+'</div></details></div>';}
+  function marks(u){return (u.external?'<div class="out-line">'+ic('box')+'<span>'+esc(f(T.outsideLine,{w:u.external}))+'</span></div>':'')+
+    (u.sensitive?'<div class="care-line">'+ic('lock')+'<span>'+esc(u.sensitive)+'</span></div>':'');}
+  function selectPart(name){
+    unselRows();var p=byName[name],map={};setHash('p'+D.parts.indexOf(p));curPart=p;selName=name;
+    p.together.forEach(function(c){map[c.name]=c.pct+'%';});
+    light(map,name);
+    var h='<div class="band wingc">'+pic(p.icon)+'<div><h2>'+esc(p.name)+'</h2><span class="meta">'+f(T.partMeta,{n:p.files,d:D.recentDays,r:p.recent})+(p.outside?f(T.outsideMore,{n:p.outside}):'')+'</span></div><p class="what">'+rich(p.what)+'</p>'+backBtn()+'</div><div class="body">';
+    h+=marks(p);
+    var at=winsOn(p.name,known);
+    if(at.length)h+='<div class="nowby">'+at.map(function(w){return wb(w)+'<span>'+esc(winName(w))+'</span>';}).join('')+'<span class="sub">'+T.nowBy+'</span></div>';
+    h+=flowBlock(p,D.links,function(n){return byName[n];});
+    if(p.subs.length){ // the rooms inside this room
+      var rel=innerView==='rel'&&p.inner.length;
+      h+='<div class="blk"><div class="blkhead"><h3>'+T.inside+'</h3>'+(p.inner.length?'<div class="seg">'+[['plan',T.vPlan],['rel',T.vRel]].map(function(o){
+        return '<button type="button" data-inner="'+o[0]+'" aria-pressed="'+((o[0]==='rel')===!!rel)+'">'+o[1]+'</button>';}).join('')+'</div>':'')+'</div>';
+      if(rel)h+='<div class="canvas" id="inner"></div>';
+      else h+='<div class="inplan">'+p.subs.map(function(c,i){return '<button type="button" class="sroom'+(c.external?' ext':'')+(c.pending?' lit':'')+'" data-sub="'+i+'">'+pic(c.icon)+
+        '<span class="nm">'+esc(c.name)+'</span><span class="sm">'+c.files+(c.external?'<span class="tagx">'+T.outsideTag+'</span>':dots(c.recent))+'</span></button>';}).join('')+'</div>';
+      h+='</div>';
+    }
+    h+='<div class="cols3">';
+    if(D.measured.length)h+=usesBlocks(p.name,D.links,function(n){return byName[n];},function(u){return 'data-go="'+esc(u.name)+'"';});
+    h+=rulesBlock(p)+'<div class="blk"><h3>'+T.pals+'</h3>';
+    if(p.together.length)h+='<div class="pals">'+p.together.map(function(c){var q=byName[c.name];
+      return '<button type="button" class="pal '+q.z+'" data-go="'+esc(c.name)+'">'+pic(q.icon)+esc(c.name)+'<span class="pct">'+c.pct+'%</span></button>';}).join('')+'</div>';
+    else h+='<p class="sub">'+T.noPals+'</p>';
+    h+='</div>'+pathsBlock(p)+'</div></div>';
+    setStage(h,p.z);drawFlow();drawInner();if(view==='rel')drawAlt();
+  }
+  function selectSub(pname,sname){
+    var p=byName[pname],c=p&&p.subs.filter(function(x){return x.name===sname;})[0];if(!c){if(p)selectPart(pname);return;}
+    unselRows();setHash('p'+D.parts.indexOf(p)+'.'+p.subs.indexOf(c));curPart=p;selName=pname;
+    var map={};p.together.forEach(function(x){map[x.name]=x.pct+'%';});light(map,pname);
+    var h='<div class="band wingc">'+pic(c.icon)+'<div><button type="button" class="crumb" data-go="'+esc(pname)+'">'+esc(pname)+'</button><h2>'+esc(c.name)+'</h2><span class="meta">'+f(T.subMeta,{n:c.files,d:D.recentDays,r:c.recent})+'</span></div><p class="what">'+rich(c.what)+'</p>'+backBtn()+'</div><div class="body">';
+    h+=marks(c)+flowBlock(c,p.inner,function(n){return p.subs.filter(function(x){return x.name===n;})[0];})+'<div class="cols3">';
+    if(p.inner.length)h+=usesBlocks(c.name,p.inner,function(n){return p.subs.filter(function(x){return x.name===n;})[0];},function(u){return 'data-sub="'+p.subs.indexOf(u)+'"';});
+    h+=rulesBlock(c)+pathsBlock(c)+'</div></div>';
+    setStage(h,p.z);drawFlow();if(view==='rel')drawAlt();
+  }
+  function selectWork(c,row){
+    unselRows();setHash('');curFlow=null;curPart=null;row.classList.add('sel');var map={};
+    if(selName!==null){selName=null;if(view==='rel')drawAlt();}
+    var list=c.parts.map(function(x){return {name:x.name,n:x.n,files:x.files};});
+    list.forEach(function(x){if(byName[x.name])map[x.name]=x.n;});
+    light(map,null);
+    setStage('<div class="band"><span class="meta">'+c.date+'</span><h2>'+esc(c.subject)+'</h2><span class="meta">'+landedText(list)+'</span>'+backBtn()+'</div><div class="body">'+stackBar(list)+legend(list)+'</div>');
+  }
+
+  // ---- what is being worked on ----
+  // A task comes from the journal the agent keeps for the next agent. The page takes two things from it: the
+  // few lines the agent wrote there for people (its name, where it stands, what waits on the reader), and
+  // where its work landed, which is measured from commits and uncommitted changes, not written by anyone.
+  function taskRooms(t){ // committed and uncommitted work together, one row per part, in the order of the plan
+    var n={},files={};
+    t.parts.concat(t.pending).forEach(function(x){n[x.name]=(n[x.name]||0)+x.n;files[x.name]=(files[x.name]||[]).concat(x.files||[]);});
+    var names=D.parts.map(function(p){return p.name;}).filter(function(k){return k in n;});
+    Object.keys(n).forEach(function(k){if(names.indexOf(k)<0)names.push(k);});
+    return names.map(function(k){return {name:k,n:n[k],files:files[k]};});
+  }
+  function taskWhen(t){var d=t.updated.slice(5);return t.days>=14?f(T.tStale,{d:d,n:t.days}):f(T.tUpdated,{d:d});}
+  function taskWins(t){return t.wins.map(winByKey).filter(function(w){return w;});}
+  function selectTask(i){
+    var t=TASKS[i],list=taskRooms(t),map={},wins=taskWins(t);
+    unselRows();setHash('t'+i);curFlow=null;curPart=null;curTask=i;$('task-'+i).setAttribute('aria-pressed','true');
+    if(selName!==null){selName=null;if(view==='rel')drawAlt();}
+    list.forEach(function(x){if(byName[x.name])map[x.name]=x.n;});
+    light(map,null,wins.length?wins:null);
+    var h='<div class="band"><h2>'+esc(t.name)+'</h2><span class="meta">'+esc(taskWhen(t))+'</span>'+backBtn()+'</div><div class="body">';
+    if(t.plain){
+      h+='<p class="tline">'+esc(t.now)+'</p>';
+      if(t.needs.length)h+='<div class="blk"><h3>'+T.tNeeds+'</h3><div class="signs">'+t.needs.map(function(x){return '<div class="sign">'+ic('user')+'<span>'+esc(x)+'</span></div>';}).join('')+'</div></div>';
+      if(t.next)h+='<div class="blk"><h3>'+T.tNext+'</h3><p>'+esc(t.next)+'</p></div>';
+    }else h+='<div class="empty">'+T.tBareLong+'</div>';
+    if(wins.length)h+='<div class="nowby">'+wins.map(function(w){return wb(w)+'<span>'+esc(winName(w))+'</span>';}).join('')+'<span class="sub">'+T.tWin+'</span></div>';
+    h+='<div class="blk"><h3>'+T.tRooms+'</h3>'+(list.length?stackBar(list)+legend(list):'<p class="sub">'+T.tNoRooms+'</p>')+'</div>';
+    h+='<div class="ask">'+(t.plain?T.tAsk:T.tAskBare)+'<span class="say">'+esc(f(t.plain?T.tSay:T.tSayBare,{n:t.name}))+'</span></div>';
+    setStage(h+'</div>');
+  }
+  if(TASKS.length||D.tasksOld){
+    $('tasks').hidden=false;$('tasksh').textContent=T.tasksH;
+    var waitingOn=TASKS.filter(function(t){return t.needs.length;}).length;
+    $('tasksm').textContent=TASKS.length?f(T.tasksN,{n:TASKS.length})+(waitingOn?T.sep+f(T.tasksWait,{k:waitingOn}):''):'';
+    TASKS.forEach(function(t,i){
+      var b=document.createElement('button');b.type='button';b.className='tcard';b.id='task-'+i;b.setAttribute('aria-pressed','false');
+      var rooms=taskRooms(t).filter(function(x){return byName[x.name];}).sort(function(x,y){return y.n-x.n;}).slice(0,6);
+      b.innerHTML='<span class="tt"><span class="tn">'+esc(t.name)+'</span>'+(t.needs.length?'<span class="flag me">'+f(T.needsFlag,{n:t.needs.length})+'</span>':'')+'</span>'+
+        '<span class="tnow'+(t.plain?'':' none')+'">'+esc(t.plain?t.now:T.tBare)+'</span><span class="tf">'+
+        (rooms.length?'<span class="tpics">'+rooms.map(function(x){var p=byName[x.name];return '<span class="pic '+p.z+'" title="'+esc(p.name)+'">'+ic(p.icon)+'</span>';}).join('')+'</span>':'')+
+        taskWins(t).map(function(w){return wb(w);}).join('')+'<span>'+esc(taskWhen(t))+'</span></span>';
+      b.addEventListener('click',function(){if(curTask===i)home();else selectTask(i);});
+      $('tcards').appendChild(b);});
+    if(D.tasksOld){$('taskso').hidden=false;$('taskso').textContent=f(T.tasksOld,{n:D.tasksOld});}
+  }
+
+  // ---- footprints ----
+  $('workh').textContent=T.work;
+  var wide=true;
+  function strip(cells){var h='<span class="foot">',last=null;
+    D.parts.forEach(function(p){if(last!==null&&last!==p.group)h+='<span class="gap"></span>';last=p.group;h+=cells(p);});return h+'</span>';}
+  function drawWork(){
+    var tb=$('table');tb.innerHTML='';
+    var head=document.createElement('div');head.className='thead';
+    head.innerHTML='<span></span>'+strip(function(p){return '<span class="cell '+p.z+'" title="'+esc(p.name)+'">'+ic(p.icon)+'</span>';})+'<span></span>';
+    tb.appendChild(head);
+    var list=D.commits.filter(function(c){return !wide||c.parts.length>=2;}).slice(0,12);
+    if(!list.length){var e=document.createElement('p');e.className='sub';e.style.padding='10px';e.textContent=T.noWork;tb.appendChild(e);return;}
+    list.forEach(function(c,i){
+      var n={};c.parts.forEach(function(x){n[x.name]=x.n;});
+      var r=document.createElement('button');r.type='button';r.className='trow';r.id='work-'+i;
+      r.innerHTML='<span class="d">'+c.date.slice(5)+'</span>'+strip(function(p){return '<span class="cell '+p.z+(n[p.name]?' t'+(n[p.name]===1?' one':''):'')+'" title="'+esc(p.name)+(n[p.name]?' '+n[p.name]:'')+'"></span>';})+'<span class="s">'+esc(c.subject)+'</span>';
+      r.addEventListener('click',function(){selectWork(c,r);});
+      tb.appendChild(r);
+    });
+  }
+  [['wide',true],['all',false]].forEach(function(o){
+    var b=document.createElement('button');b.type='button';b.id='seg-'+o[0];b.textContent=T[o[0]];b.setAttribute('aria-pressed',String(o[1]===wide));
+    b.addEventListener('click',function(){wide=o[1];Array.prototype.forEach.call($('seg').children,function(x){x.setAttribute('aria-pressed',String(x===b));});drawWork();});
+    $('seg').appendChild(b);
+  });
+  drawWork();
+  var m=/^#p(\d+)(?:\.(\d+))?$/.exec(location.hash||''),hp=m&&D.parts[+m[1]];
+  var mt=/^#t(\d+)$/.exec(location.hash||'');
+  if(hp&&m[2]&&hp.subs[+m[2]])selectSub(hp.name,hp.subs[+m[2]].name);else if(hp)selectPart(hp.name);else if(mt&&TASKS[+mt[1]])selectTask(+mt[1]);else home();
+  quiet=false;
+})();
+</script>
+
+</body>
+</html>
