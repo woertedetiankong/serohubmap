@@ -22,25 +22,6 @@ Y01 驱动器固件 -> 上位机调试通道: 收到字节
 电机控制环 <-> 控制算法: 下周期生效
 ```
 
-```calls 上位机调一个控制参数
-HOST_UART_IRQ_TASK | 串口收完一段报文、线路空闲时进这个中断，把收到的字节整段交出去
-  MavlinkRecvCallback | 拼出消息，按消息类型把新参数写进轴数据，再回显给上位机
-    进 rx_data: 串口收到的字节
-    出 axis->pos_speed_ctl_config: 位置速度环的新增益
-    mavlink_parse_char | 逐字节拼出一条完整消息
-      出 r_message: 拼好的消息
-    mavlink_msg_posspeedctlconfig_decode | 把“位置速度环配置”消息拆成各个字段
-      出 posspeedctlconfig: 上位机发来的增益和开关
-    MotorCtlParamSetUpdata | 按电机参数把周期、限速、编码器分辨率等关联配置重算
-      notch_filter_config_set | 按周期重算陷波滤波器系数
-    CallSendCallback | 把回显的配置发回上位机，通过回调
-PosSpeedCtlLoopTask | 下一个位置环周期由定时中断触发，控制环带着新参数跑
-  ModeRun | 按当前运动模式选一步来跑
-    PositionStep | 位置模式下规划轨迹、算电流目标
-      pos_speed_ctl_pip | 用新增益算出电流目标
-        进 rtu_config: 含新增益的位置速度环配置
-```
-
 ```flow 总线主站让电机走到目标位置
 总线主站 | PLC 或运动控制器 | user
 总线主站 -> Y01 驱动器固件: CAN 报文
@@ -51,25 +32,6 @@ CiA402 驱动规范 -> 运动模式与应用: 切换模式
 电机控制环 <-> 控制算法: 算电压
 电机控制环 -> 硬件公共接口: 三相电压
 硬件公共接口 -> Y01 驱动器固件: 输出 PWM
-```
-
-```calls 总线主站让电机走到目标位置
-canDispatch | CANopen 协议栈收到驱动器板子转来的一帧，按类型交给 SDO、PDO 处理
-  进 m: 一帧 CAN 报文
-OD_0x607A_Target_position_Write_Callback | 协议栈写目标位置对象时调用它，经对象字典的函数指针 `OD_Write_Callback` 转来
-  进 value: 主站写来的目标位置
-  set_Target_position | 记下目标位置，并转存进参数数据库
-    进 val: 目标位置
-PosSpeedLoopCtrl | 每个位置环周期：读编码器，跑应用，算电流目标
-  AppRun | 应用调度，运行当前模式
-    PpModeRun | 轮廓位置模式：读出目标位置，换算成电机端的规划目标，通过函数指针 `run`
-      PosTrajectoryPlanningHandle | 调规划器算出这一周期的位置指令
-        出 axis->input_shaping_input.pos_cmd_p: 交给控制环的位置指令
-  PosSpeedCtlLoopTask | 控制层状态机在使能时按位置模式做位置速度调节，得出电流目标
-CurrentLoopCtrl | 每个电流环中断：读电流，算电压，输出
-  CurrentCtlLoopTask | 把轴数据交给电流环算法
-    current_ctl_loop_task | 矢量控制，算出三相目标电压
-  embedded_project/Y01/Board/bsp_api.c:bsp_set_phase_voltage | 板子上把三相电压换成 PWM 占空比输出
 ```
 
 # 伺服控制核心
@@ -119,27 +81,6 @@ CurrentLoopCtrl | 每个电流环中断：读电流，算电压，输出
 保存与抱闸 -> 硬件与运行平台: 存储与抱闸
 ```
 
-```calls
-set_app | 切换到某个模式：先停掉正在跑的同类模式，再初始化新模式
-  进 name: 要切到的模式
-  AppStop | 停掉原来那个模式
-AppRun | 每个位置环周期，按各模式所处的状态依次调用启动、运行、停止
-  进 hw_ready_state: 硬件是否就绪，没就绪的模式退回等待
-  PpModeRun | 轮廓位置模式：读目标位置和速度参数，换算成电机端的规划目标，通过函数指针 `run`
-    出 kPpMode.traj: 交给规划器的目标位置、速度和加减速
-    PosTrajectoryPlanningHandle | 调规划器算出这一周期的位置指令
-      出 axis->input_shaping_input.pos_cmd_p: 交给控制环的位置指令
-  IdElecModeRun | 电参数辨识：计算在控制环里跑，这里看它做完就失能电机，通过函数指针 `run`
-    进 axis->elec_id_sin_output.state_now: 辨识进行到哪一步
-AppStatusScanFast | 每个位置环周期跑快速故障检查，有故障就把控制字改成失能
-  出 kAppCheck.error: 各项故障的标志位
-AppStatusScanSlow | 每 1ms 跑过温、过载等慢速检查，有新故障就排进错误记录
-  set_app_Storage_cmd | 提出“把错误记录写进 Flash”的请求
-AppStoreUpdata1ms | 每 1ms 看有没有存取请求，有就读写 Flash 或恢复出厂
-  进 store_cmd: 读参数、写参数、恢复出厂或写错误记录
-AppBrakeControlRun | 每 1ms 按使能状态和转速决定抱闸还是松闸
-```
-
 ## 电机控制环
 
 驱动器的心跳：每个电流环周期读电流、算电压、输出 PWM；每个位置环周期读编码器、跑应用、算位置速度。
@@ -164,26 +105,6 @@ AppBrakeControlRun | 每 1ms 按使能状态和转速决定抱闸还是松闸
 电流环 <-> 控制算法: 算电压
 位置速度环 -> 软件示波器: 采样 `ScopeIsrHandle`
 位置速度环 -> 参数数据库: 同步变量 `AppParamSyncUser`
-```
-
-```calls
-MotorCtrlInit | 上电时把电机、编码器、保护和各环的默认参数填进轴数据
-  出 kAxis.pmsm_config: 电机参数
-CurrentLoopCtrl | 电流环中断：读三相电流，算电压，交给硬件输出
-  进 kAxis.current_ctl_input.iabc_now_A: 实际三相电流
-  出 kAxis.current_ctl_output.uabc_tar_comp_V: 补偿后的三相目标电压
-  CurrentCtlLoopTask | 把轴数据交给生成的电流环算法
-    current_ctl_loop_task | 控制算法里的电流环矢量控制
-PosSpeedLoopCtrl | 位置环中断：读编码器，跑故障检查和应用，算电流目标，再同步变量、采波形
-  出 kAxis.motor_ctl_sm_input.hw_ready_state: PWM 已开且电流校准完成
-  AppRun | 应用调度，让当前模式写下这一周期的目标
-  PosSpeedCtlLoopTask | 位置反馈、测速、保护检查，再由控制层状态机决定失能、使能或故障，使能时按模式运行
-    出 axis->motor_ctl_sm_output.state: 失能、使能或故障
-    motor_pos_sensor | 把编码器计数换成累计位置和电角度
-  AppParamSyncUser | 把实时量同步到参数数据库
-  ScopeIsrHandle | 让软件示波器采一个点
-UnrealTimeBase1ms | 1ms 任务：滤波母线电压和温度，跑慢速检查、抱闸、指示灯和参数存储
-  AppStoreUpdata1ms | 处理存取 Flash 的请求
 ```
 
 ## 控制算法
@@ -212,28 +133,6 @@ UnrealTimeBase1ms | 1ms 任务：滤波母线电压和温度，跑慢速检查�
 电机控制环 <-> 虚拟电机: 电压与电流
 ```
 
-```calls 一个控制周期
-PosSpeedCtlLoopTask | 电机控制环每个位置环周期把轴数据交进来
-  motor_pos_sensor | 把编码器计数换成累计位置和电角度
-    进 rtu_input: 编码器当前计数
-    出 rty_output: 累计位置和电角度
-  speed_obs_pll | 用锁相环从位置估出转速
-    出 rty_output: 估出的转速
-  protect_check | 检查过流、母线电压、温度、跟随误差和超速
-    出 rty_error: 故障码，0 表示正常
-PositionStep | 位置模式下由控制层状态机调用
-  input_shaping_ei | 对位置指令做输入整形，抑制末端振动
-  pos_speed_ctl_pip | 位置速度调节，算出 q 轴电流目标
-    出 rty_output: 电流目标与跟随误差
-  CommandCurrentFilter | 把电流目标滤波后交给电流环
-    notch_filter | 陷波滤掉电流目标里的共振频率
-current_ctl_loop_task | 电流环中断里：坐标变换、电流调节、死区补偿
-  进 rtu_input: 实际电流、电角度和电流目标
-  出 rty_output: 三相目标电压
-SimPlantStep | 仿真时每个电流环周期调用一次
-  sim_plant | 虚拟电机：由电压算出电流、转速和编码器计数
-```
-
 ## 参数数据库
 
 驱动器的全部参数和运行变量都放在这里，通信和应用都从这里读写。
@@ -255,25 +154,6 @@ SimPlantStep | 仿真时每个电流环周期调用一次
 范围限制 -> 参数表: 限幅后的值
 电机控制环 -> 同步: 每周期 `AppParamSyncUser`
 同步 -> 参数表: 实时变量
-```
-
-```calls
-AppParamInit | 上电或恢复出厂时，把控制字、状态、编码器、限位等参数填成默认值
-  出 kAppBaseConfig: 基础配置，如 CAN 地址和波特率
-  set_app_Max_profile_velocity | 写最大轮廓速度，电机使能时不许改
-    进 val: 新的最大轮廓速度
-    app_param_restrictions_update | 按峰值电流和最高转速，把相关上限和目标收紧
-      出 axis->pos_speed_ctl_input.iq_max_A: 交给控制环的电流上限
-  app_param_update | 把默认值逐个再写一遍，让有联动的参数各自生效
-    set_app_Target_position | 写目标位置，超出软件限位就拒绝
-      进 val: 目标位置
-      出 返回: 写成功还是超出范围
-    set_app_Modes_of_operation | 写运行模式，改控制层模式，再通过回调让应用调度切换
-      出 axis->motor_ctl_sm_config.mode: 控制层用的模式
-AppParamSyncUser | 每个位置环周期把控制环的实时量换算进参数表
-  get_app_Position_actual_value_inc | 从编码器累计位置算出负载端位置
-    出 kAppMotionInfo.Position_actual_value_inc: 负载端当前位置
-  get_app_Velocity_actual_value | 把观测到的转速换成负载端每分钟转数
 ```
 
 ## 通用工具库
@@ -305,22 +185,6 @@ AppParamSyncUser | 每个位置环周期把控制环的实时量换算进参数�
 示波器配置 -> 采样与触发: 配置
 采样与触发 -> 波形缓冲: 样本
 波形缓冲 -> 对外通信: 波形数据 `ScopeChannelDataRead`
-```
-
-```calls
-ControlWordWriteCallback | 上位机发来示波器控制字，按它配置、开始采样、停止或重置
-  进 control_word: 配置、等触发、立即采、停止或重置
-  scope_config | 检查采样点数和间隔，再配置通道
-    scope_channel_config | 给每个打开的通道找到它在参数数据库里的变量，并分好环形缓冲
-      get_database_param_info | 按参数编号查出变量的地址、类型和字节数
-ScopeIsrHandle | 每个位置环周期由电机控制环调用：按间隔采一个点，等触发，判断采满没有
-  出 kScopeObject.status_word: 采完后变成采样成功
-  scope_data_sample_run | 每个打开的通道读一次变量，放进环形缓冲
-  scope_trigger_catch | 看触发通道有没有越过阈值，触发后从触发点前后截取数据
-  sample_complete_judge | 采够点数就标记采完
-ScopeChannelDataRead | 上位机来取波形时，按帧从环形缓冲里读出一段
-  进 channel_num: 第几个通道
-  进 subindex: 第几帧
 ```
 
 # 对外通信
@@ -359,20 +223,6 @@ CiA402 驱动规范 <-> 伺服控制核心: 目标与状态
 示波器接口 <-> 软件示波器: 配置与波形
 ```
 
-```calls
-MavlinkRecvCallback | 板子收到一段字节后调到这里，拼出消息并按类型分发，最后回一条应答
-  进 rx_data: 这次收到的字节
-  进 axis: 要读写的那根轴的控制变量
-  出 send_msg: 准备回给上位机的应答
-  mavlink_parse_char | 喂进一个字节，拼满一条且校验通过就交回
-    出 r_message: 拼好的一条消息
-  mavlink_scope_control_callback | 示波器的开始、停止等指令转交给软件示波器
-    ControlWordWriteCallback | 软件示波器按指令配置、复位或开始采样
-  set_app_Controlword | 写类消息按字段写进参数数据库，比如控制字；上位机握有控制权时才写
-  MotorCtlParamSetUpdata | 写完后让控制环按电机参数把关联配置一起重算
-  CallSendCallback | 把打包好的应答交给板子登记的发送函数发回上位机，通过回调
-```
-
 ## MAVLink 协议库
 
 MAVLink 消息的打包解包代码，以及由参数表生成的伺服专用消息定义。
@@ -405,33 +255,6 @@ EtherCAT 协议栈 -> 对象字典回调: 对象读写
 驱动状态机 -> 参数数据库: 使能失能 `set_app_Controlword`
 驱动状态机 -> 状态字与错误码: 当前状态
 状态字与错误码 -> 对象字典回调: 状态字
-```
-
-```calls 主站写一个对象
-SlaveOD_Write_Callback | CANopen 协议栈收到主站写对象时调到这里，通过回调
-  进 index: 对象编号，例如 0x6040 控制字、0x6060 运动模式
-  进 data: 主站写来的值
-  master_cia402_write_callback | 上位机握有控制权就拒绝，否则按对象编号分给对应的写函数
-    出 返回: 中止码，告诉主站写成功还是被拒
-    OD_0x6040_Controlword_Write_Callback | 写控制字
-      set_Controlword | 记下控制字，并立刻让状态机按它跳一步
-        出 kPDS_FSA.Controlword: 主站最新的控制字
-    OD_0x6060_Modes_of_operation_Write_Callback | 写运动模式
-      set_Modes_of_operation | 把标准模式号换成驱动器自己的模式，写进参数数据库
-        进 val: 标准模式号（PP、PV、CSP 等）
-```
-
-```calls 每个位置环周期
-Cia402ErrorCodeScan | 把应用层查出的故障位按优先级翻成一个标准错误码
-  进 check_error_val: 应用层报来的故障位
-PDS_FSA_Run | 有错误就转进故障状态，有急停请求就先减速停下
-  出 CurrentState: 状态机当前所在的状态
-  Transition_13_Event | 错误码不为零就判定出了故障
-  QuickStopRun | 让应用层急停，速度降到零才算停完
-  PDS_FSA_set_statusword | 把当前状态编进状态字的状态位
-UpdateStatusword | 按当前运动模式补上目标到达、跟随误差等状态位
-  进 kCheckStatusVal: 应用层报来的运动状态
-  出 statusword: 给主站看的状态字
 ```
 
 ## CANopen 协议栈
@@ -501,24 +324,6 @@ STM32H743 驱动器板子的工程：芯片启动、中断定时、编码器/CAN
 板级驱动 <-> 电机: PWM 与反馈
 ```
 
-```calls 上电到控制环
-embedded_project/Y01/Core/Src/main.c:main | 芯片上电后的主程序：配好时钟和外设，登记回调，初始化软件和硬件，然后把一切交给中断
-  HalInit | 依次初始化参数、控制环、各应用、参数存储、示波器、抱闸
-  BspInit | 启动硬件：等母线电压稳定、校准电流采样、开 1ms 定时器、电流采样中断、PWM、CAN 和调试串口
-    出 mavlink_rx_buff: 调试串口开始往这里收字节
-CURRENT_LOOP_IRQ_TASK | 每次三相电流采样完成触发一次，约 20kHz，通过中断
-  进 hadc: 触发中断的那路 ADC
-  出 kBspData.pl_start_state: 第一次跑完电流环后置位，同时启动位置环定时器
-  CurrentLoopCtrl | 自检和电流校准都通过后，跑一次电流环
-POSITION_LOOP_TIM_IRQ_TASK | 位置环定时器到点触发，约 10kHz，通过中断
-  HardwareSelfTestRun | 自检没完成时调用，等编码器就绪
-  EncoderDataRead | 读电机端和负载端编码器
-  PosSpeedLoopCtrl | 自检完成后跑位置速度环和应用
-HOST_UART_IRQ_TASK | 调试串口一帧收完、线路空闲时触发，通过中断
-  进 mavlink_rx_buff: 这一帧收到的字节
-  MavlinkRecvCallback | 把这些字节交给上位机调试通道解包
-```
-
 ### 板级驱动
 
 把芯片外设包装成控制核心能用的接口：电流采样、PWM、编码器、CAN、Flash、定时中断、固件升级。
@@ -584,24 +389,6 @@ bsp 接口 <-> Y01 驱动器固件: 板上实现
 bsp 接口 <-> 电脑仿真驱动器: 虚拟实现
 ```
 
-```calls 上电自检与电流校准
-BusVoltageCheck | 板子启动时反复调用（经 `sys_bus_voltage_check`），母线电压连续正常约 0.5 秒才算稳定，欠压 2 秒或超时 3 秒就报错
-  出 sys_msg.bus_voltage_check_flag: 稳定、出错或还不确定
-HardwareSelfTestRun | 位置环中断里反复调用，直到电机端和负载端编码器都就绪，超时就报编码器错误
-  出 sys_msg.hardware_self_test_status: 为真以后控制环才开始跑
-  MotorCtlSmStateInit | 用编码器此刻的位置初始化控制状态，超时就从零开始
-    进 motor_pos_now_p: 电机端编码器单圈值
-  AppStatusScanFast | 自检期间也扫一遍故障
-CurrentCalibrationStep | 第一次使能电机时调用（经 `sys_current_calibration_step`），零电压下采 1024 次电流取平均当零点
-  出 sys_msg.current_calibration.drift: 三相电流的零点
-  embedded_project/Y01/Board/bsp_api.c:bsp_set_phase_voltage | 板上实现：把三相电压按母线电压换成 PWM 占空比，这里给零电压
-    进 voltage: 三相目标电压
-  embedded_project/Y01/Board/bsp_api.c:bsp_set_pwm_state | 校准开始时打开 PWM，电流异常时立刻关掉
-    进 state: 开或关
-embedded_project/Y01/Board/bsp_api.c:bsp_get_phase_current | 控制环取电流时调用：板上实现，用 ADC 读数减去校准零点再换算成安培
-  出 piabc: 三相电流
-```
-
 ## Flash 存储库
 
 把参数以键值形式存进 Flash 的开源库。
@@ -632,24 +419,6 @@ ZeroMQ 收发 <-> 对外通信: 收发报文 `MavlinkRecvCallback`
 高精度定时器 -> 伺服控制核心: 定时回调 `CurrentLoopCtrl`
 硬件公共接口 <-> 虚拟硬件: 虚拟实现
 虚拟硬件 <-> 伺服控制核心: 虚拟电机
-```
-
-```calls 虚拟驱动器跑起来
-SIL_project/main.c:main | 在电脑上启动虚拟驱动器：初始化参数、控制环和各应用，开 ZeroMQ，再开三个 1ms 定时器，按回车停止
-  ZmqHandlerInit | 在本机 5555 端口开一个 ZeroMQ 连接，等上位机来连
-    出 responder: 和上位机通信用的连接
-  RegisterRecvCallback | 登记收到报文后交给谁：上位机调试通道的 `MavlinkRecvCallback`
-    进 callback: 收包后要调用的函数
-  StartHighPrecisionTimer | 用 Windows 定时器队列按周期回调
-    进 periodMs: 周期，毫秒
-MotorCtrlTimerCallback | 每 1ms 一次，通过定时器线程：连跑 20 次电流环和虚拟电机、10 次位置速度环，相当于 20kHz 和 10kHz
-  CurrentLoopCtrl | 跑一次电流环
-  SimPlantStep | 虚拟电机按电压算出下一刻的电流和位置
-  PosSpeedLoopCtrl | 每两次电流环跑一次位置速度环
-ZmqRecvTimerCallback | 每 1ms 一次，通过定时器线程：看上位机有没有发报文来
-  ZmqAsyncRecv | 不等待地收一包，收到就交给登记过的函数
-    进 responder: 和上位机的连接
-    MavlinkRecvCallback | 上位机调试通道解包处理，通过函数指针
 ```
 
 # 模型、契约与工具
@@ -764,25 +533,6 @@ MATLAB 工程的元数据文件。
 生成物 -> 主机软件: 锁定使用
 ```
 
-```calls 一次完整检查
-contract/tools/contract_tool.py:main | 合并检查或维护者在命令行运行，按命令决定只校验、重新生成还是全部检查
-  进 args.command: 要做哪一步，合并检查用 all
-  load_contract | 读根契约，再把参数、信号、诊断、能力四个分文件拼成一份
-    出 返回: 合起来的整份契约
-  validate | 逐项检查编号和名字不重复、类型和单位合法、换算规则自洽
-    进 contract: 整份契约
-  contract/tools/generators.py:generate | 把契约渲染成全部生成物；检查模式下只比对、不写文件
-    进 check: 为真时只比对
-    出 stale: 已经过期的生成文件
-    render_outputs | 算出每个生成文件应有的内容：C 头文件、主机表格、EDS 片段、黄金向量和清单
-  check_sources | 对照固件参数头文件和 CANopen 对象字典，确认字段还在、地址名称类型没变
-    出 problems: 固件偏离契约的地方
-    parse_eds | 把对象字典文件读成按地址查的表
-  check_conversion_evidence | 确认已验证的单位换算在固件源码里找得到依据
-  check_golden_vectors | 用契约的换算规则重算黄金向量，确认数值和字节都对
-  check_mavlink_provenance | 确认 MAVLink 生成头文件没被悄悄换掉，消息编号和字段不变
-```
-
 ## 工厂服务
 
 研发和产线用的服务通道：定义工厂指令，并在电流环里录制有界波形供分析。
@@ -807,36 +557,6 @@ contract/tools/contract_tool.py:main | 合并检查或维护者在命令行运�
 服务接口 <-> 波形录制器: 触发与样本 `FactoryServiceTraceConfigure`
 ```
 
-```calls 录一段电流环波形
-FactoryServiceInit | 清空诊断快照，按电流环频率准备好录制器；固件里还没有地方调用它，目前只有测试调用
-  进 base_sample_rate_hz: 电流环每秒运行的次数
-  FactoryTraceRecorderInit | 录制器清零，回到空闲
-FactoryServiceTraceConfigure | 工厂主机选通道、分频和触发方式；主机通道尚未接通，目前由测试调用
-  进 config: 通道、分频、触发条件
-  FactoryServiceSignalSupported | 确认每个通道都是 v1 支持的信号
-  FactoryTraceRecorderConfigure | 正在录时拒绝改配置，否则存下
-FactoryServiceTraceArm | 开始等待触发
-  FactoryTraceRecorderArm | 清空缓冲，换一个新的录制编号
-    出 recorder->capture_id: 这次录制的编号
-FactoryServiceTracePushFocIsr | 每个电流环周期调用一次，挑出所选通道的值；设计上挂在电流环计算之后，目前还没挂上
-  进 source: 这一周期的电流参考、电流反馈、相电流和母线电压
-  FactoryServiceSignalValue | 按信号编号取出对应的数
-  FactoryTraceRecorderPushIsr | 按分频取样；触发前只保留设定长度的历史，触发后录满后段就冻结
-    出 recorder->state: 等待、已触发或录完
-FactoryServiceTraceReadSample | 录完后按时间顺序一条条取出样本
-  进 logical_index: 第几条样本
-  出 sample: 这一条的各通道数值
-```
-
-```calls 重新生成编号
-tools/factory_service_codegen/generate.py:main | 构建目标或开发者运行，generate 重新生成，check 只比对
-  tools/factory_service_codegen/generate.py:generate | 读服务定义，写出或比对两个生成物
-    进 check: 为真时只比对
-    出 stale: 已经过期的生成文件
-    render_header | 把能力、诊断、波形信号和 CANopen 对象编成 C 编号宏
-    render_canopen | 写出 CANopen 绑定清单
-```
-
 ## 代码生成工具
 
 从参数表和 EDS 生成参数数据库、MAVLink 消息和 CANopen 对象字典的工具。
@@ -857,18 +577,6 @@ CANopen 生成器 | 包装 objdictgen 的脚本
 EDS 文件 -> CANopen 生成器: 对象定义
 数据库生成器 -> 生成代码: 参数与消息
 CANopen 生成器 -> 生成代码: 对象字典
-```
-
-```calls 重新生成对象字典
-tools/canopen_codegen/generate.py:main | 读生成配置，按命令分派；generate 依次做下面两步
-  进 args.command: generate、check、list 等
-  _generate_canopen | 由 EDS 生成 CanFestival 的对象字典 C 代码
-    进 source: 现在作为源头的 EDS 文件
-    _find_odg | 找 objdictgen 程序：环境变量、本地虚拟环境或系统路径
-    _run | 以子进程运行 objdictgen 的转换命令，它内部做什么量不到
-  _write_profile_outputs | 由 CiA402 配置写出头文件和对象说明文档
-    _render_profile_header | 拼出 CiA402 对象的 C 头文件
-    _render_profile_doc | 拼出对象字典说明文档
 ```
 
 ## 项目说明与配置
